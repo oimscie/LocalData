@@ -15,7 +15,7 @@ namespace LocalData.SuperSocket
 {
     public class OrderSocketClient
     {
-
+        private bool IsConnecting = false;
         private readonly AsyncTcpSession client;
         private readonly string ip = ConfigurationManager.AppSettings["ServerIp"];
         private readonly int port = 8090;
@@ -57,7 +57,8 @@ namespace LocalData.SuperSocket
 
         void client_Error(object sender, ErrorEventArgs e)
         {
-
+            FormUtil.ModifyLable(DataForm.MainForm.Order, "断开", Color.Red);
+            Connect();
         }
 
         void client_Connected(object sender, EventArgs e)
@@ -91,6 +92,7 @@ namespace LocalData.SuperSocket
 
         void client_Closed(object sender, EventArgs e)
         {
+            FormUtil.ModifyLable(DataForm.MainForm.Order, "断开", Color.Red);
             Connect();
         }
 
@@ -99,13 +101,19 @@ namespace LocalData.SuperSocket
         /// </summary>
         public void Connect()
         {
+            if (IsConnecting) {
+                return;
+            }
+            IsConnecting = true;
             try
             {
                 client.Connect(new IPEndPoint(IPAddress.Parse(ip), port));
-                while (!client.IsConnected) {
-                    FormUtil.ModifyLable(DataForm.MainForm.Order, "中断", Color.Red);
-                    Thread.Sleep(3000);
-                    if (!client.IsConnected) {
+                while (!client.IsConnected)
+                {
+                    FormUtil.ModifyLable(DataForm.MainForm.Order, "重连中", Color.Red);
+                    Thread.Sleep(5000);
+                    if (!client.IsConnected)
+                    {
                         client.Connect(new IPEndPoint(IPAddress.Parse(ip), port));
                     }
                 }
@@ -113,7 +121,10 @@ namespace LocalData.SuperSocket
             }
             catch (Exception e)
             {
-                 LogHelper.WriteLog("指令服务连接错误", e);
+                LogHelper.WriteLog("指令服务连接错误", e);
+            }
+            finally {
+                IsConnecting = false;
             }
         }
 
@@ -127,6 +138,9 @@ namespace LocalData.SuperSocket
                 if (client.IsConnected)
                 {
                     client.Send(data, 0, data.Length);
+                }
+                else {
+                    Connect();
                 }
             }
             catch (Exception e)
