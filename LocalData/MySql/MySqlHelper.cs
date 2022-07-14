@@ -40,8 +40,9 @@ namespace LocalData.MySql
             {
                 Conn.Close();
             }
-            catch
+            catch (Exception e)
             {
+                LogHelper.WriteLog("mysql关闭错误", e);
             }
         }
         /// <summary>
@@ -71,11 +72,16 @@ namespace LocalData.MySql
             {
                 return Open();
             }
-            if (Conn.State == ConnectionState.Broken || Conn.State == ConnectionState.Connecting)
+            if (Conn.State == ConnectionState.Broken)
             {
                 Close();
                 return Open();
             }
+            if (Conn.State == ConnectionState.Connecting)
+            { 
+                return false;
+            }
+
             if (Conn.State == ConnectionState.Executing || Conn.State == ConnectionState.Fetching)
             {
                 return false;
@@ -278,7 +284,6 @@ namespace LocalData.MySql
             try
             {
                 Command.CommandText = sql;
-
                 MySqlDataReader Reader = Command.ExecuteReader();
                 Dictionary<string, string> back = new Dictionary<string, string>();
                 if (Reader.Read())

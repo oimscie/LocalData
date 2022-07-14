@@ -47,12 +47,15 @@ namespace LocalData.Data
         {
             while (Resource.IsStart)
             {
-                while (isRead) {//等待mysql释放
-                    Thread.Sleep(2);
+                while (isRead)
+                {//等待mysql释放
+                    Thread.Sleep(1000);
                 }
                 isRead = true;
+                bool HasRead = false;
                 string sql = "select distinct VEHICLE_ID as vid from fuel_orig where company='" + Company + "' and  REC_STATE='NO' and ADD_TIME > DATE_SUB(NOW(),INTERVAL  2 HOUR)";
-                try {
+                try
+                {
                     List<string> list = mysql.MultipleSelect(sql, "vid", "");
                     if (list != null)
                     {
@@ -136,18 +139,25 @@ namespace LocalData.Data
                                 }
                             }
                         }
+                        HasRead = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.WriteLog("标定错误", ex);
+                }
+                finally
+                {
+                    isRead = false;
+                    if (HasRead)
+                    {
                         Thread.Sleep(1000 * 6);//所有车辆标定一轮后睡眠6S
                     }
                     else
                     {
-                        Thread.Sleep(1000 * 60);
+                        Thread.Sleep(1000 * 60);//无车辆标定睡眠60S
                     }
-                } catch(Exception ex) {
-                    LogHelper.WriteLog("标定错误",ex);
-                } finally { 
-                    isRead = false; 
                 }
-            
             }
         }
         /// <summary>
@@ -167,7 +177,8 @@ namespace LocalData.Data
                     ValueTuple<double, double, double, double, double> param = paramDic[brand];
                     Result = (float)(param.Item1 + param.Item2 * fitFuel + param.Item3 * Math.Pow(fitFuel, 2) + param.Item4 * Math.Pow(fitFuel, 3) + param.Item5 * Math.Pow(fitFuel, 4));
                 }
-                else {
+                else
+                {
                     Result = 0;
                 }
             }
@@ -194,7 +205,7 @@ namespace LocalData.Data
         {
             while (isRead)
             {//等待mysql释放
-                Thread.Sleep(2);
+                Thread.Sleep(5000);
             }
             isRead = true;
             try
@@ -232,11 +243,12 @@ namespace LocalData.Data
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                LogHelper.WriteLog("标定信息更新错误---",ex);
+                LogHelper.WriteLog("标定信息更新错误---", ex);
             }
-            finally {
+            finally
+            {
                 isRead = false;
             }
         }
