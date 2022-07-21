@@ -141,7 +141,7 @@ namespace LocalData
         /// </summary>
         private void ThreadStart()
         {
-            new OrderSocketClient(Company);
+            new OrderSocketClient();
             UpdateState(null, null);
             //禁止列排序
             for (int i = 0; i < this.dataGridView1.Columns.Count; i++)

@@ -1,4 +1,5 @@
-﻿using LocalData.staticResouce;
+﻿using LocalData.OrderMessage;
+using LocalData.staticResouce;
 using LocalData.SuperSocket;
 using SuperSocket.ClientEngine;
 using System;
@@ -39,17 +40,17 @@ namespace LocalData.CHCNETSDK
         {
             return CHCNetSDK.NET_DVR_Init();
         }
-        public LocalPlay(string[] info, RealVideoDataConnect Connects, string keys)
+        public LocalPlay(MonitorOpen order, RealVideoDataConnect Connects, string keys)
         {
             key = keys;
             Connect = Connects;
             Sockets = Connect.GetClient();
-            Userinfo = info[1];
-            CameraIp = info[2];
-            CameraPort = info[3];
-            UserName = info[4];
-            PassWord = info[5];
-            Brand = info[6];
+            Userinfo = order.Company;
+            CameraIp = order.CameraIP;
+            CameraPort = order.CameraPort;
+            UserName = order.UserName;
+            PassWord = order.Password;
+            Brand = order.Brand;
             M_lUserID = -1;
             M_lRealHandle = -1;
             ChannelId = 1;
@@ -187,8 +188,7 @@ namespace LocalData.CHCNETSDK
                     {
                         if (RealData.TryDequeue(out byte[] temp))
                         {
-                            byte[] Realdata = temp.Concat(mark).ToArray();
-                            Connect.Send(Realdata);
+                            Connect.Send(temp.Concat(mark).ToArray());
                         };
                     }
                     else
@@ -203,15 +203,12 @@ namespace LocalData.CHCNETSDK
                 }
             }
         }
-        public bool PTZControl(string[] info)
+        public bool PTZControl(MonitorControl Control)
         {
-            switch (info[0])
+            switch (Control.OperationType)
             {
-                case "stop":
-                    StopPlay();
-                    return false;
-                case "up":
-                    switch (info[1])
+                case MonitorOperationType.up:
+                    switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.TILT_UP, 0, 7);
@@ -221,8 +218,8 @@ namespace LocalData.CHCNETSDK
                             return false;
                     }
                     return false;
-                case "down":
-                    switch (info[1])
+                case MonitorOperationType.down:
+                    switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.TILT_DOWN, 0, 7);
@@ -232,8 +229,8 @@ namespace LocalData.CHCNETSDK
                             return false;
                     }
                     return false;
-                case "left":
-                    switch (info[1])
+                case MonitorOperationType.left:
+                    switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.PAN_LEFT, 0, 7);
@@ -243,8 +240,8 @@ namespace LocalData.CHCNETSDK
                             return false;
                     }
                     return false;
-                case "right":
-                    switch (info[1])
+                case MonitorOperationType.right:
+                    switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.PAN_RIGHT, 0, 7);
@@ -254,8 +251,8 @@ namespace LocalData.CHCNETSDK
                             return false;
                     }
                     return false;
-                case "amplification":
-                    switch (info[1])
+                case MonitorOperationType.amplification:
+                    switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.FOCUS_NEAR, 0, 7);
@@ -265,8 +262,8 @@ namespace LocalData.CHCNETSDK
                             return false;
                     }
                     return false;
-                case "narrow":
-                    switch (info[1])
+                case MonitorOperationType.narrow:
+                    switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.FOCUS_FAR, 0, 7);
@@ -276,8 +273,8 @@ namespace LocalData.CHCNETSDK
                             return false;
                     }
                     return false;
-                case "forward":
-                    switch (info[1])
+                case MonitorOperationType.forward:
+                    switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.ZOOM_IN, 0, 7);
@@ -287,8 +284,8 @@ namespace LocalData.CHCNETSDK
                             return false;
                     }
                     return false;
-                case "back":
-                    switch (info[1])
+                case MonitorOperationType.back:
+                    switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.ZOOM_OUT, 0, 7);

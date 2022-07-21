@@ -1,4 +1,5 @@
 ﻿using LocalData.CHCNETSDK;
+using LocalData.OrderMessage;
 using LocalData.staticResouce;
 using SuperSocket.ClientEngine;
 using System;
@@ -18,11 +19,14 @@ namespace LocalData.SuperSocket
         private bool IsConnecting = false;
         private readonly AsyncTcpSession client;
         private readonly string ip = ConfigurationManager.AppSettings["ServerIp"];
+        private readonly string company = ConfigurationManager.AppSettings["Company"];
         private readonly int port = 8090;
-        private readonly string info;
-        public OrderSocketClient(string infos)
+        private readonly PacketForm PacketForm;
+        private readonly OrderMessageDecode Decode;
+        public OrderSocketClient()
         {
-            info = infos;
+            PacketForm = new PacketForm();
+            Decode = new OrderMessageDecode();
             client = new AsyncTcpSession();
             // 连接断开事件
             client.Closed += client_Closed;
@@ -52,7 +56,9 @@ namespace LocalData.SuperSocket
         }
         void heart(object source, ElapsedEventArgs e)
         {
-            Send(Encoding.UTF8.GetBytes("Heart!").Concat(new byte[] { 11, 22, 33, 44 }).ToArray()); ;
+            Send(PacketForm.LocalHeart(new LocalHeart() { 
+            messageType=OrderMessageType.LocalHeart
+            }));
         }
 
         void client_Error(object sender, ErrorEventArgs e)
@@ -63,7 +69,11 @@ namespace LocalData.SuperSocket
 
         void client_Connected(object sender, EventArgs e)
         {
-            Send(Encoding.UTF8.GetBytes("Company!"+info).Concat(new byte[] { 11, 22, 33, 44 }).ToArray());
+            Send(PacketForm.LocalLogin(new LocalLogin()
+            {
+                messageType = OrderMessageType.LocalLogin,
+                Company = company
+            }));
             FormUtil.ModifyLable(DataForm.MainForm.Order, "已连接", Color.Green);
         }
 
@@ -71,11 +81,11 @@ namespace LocalData.SuperSocket
         {
             try
             {
-                string[] Info = Encoding.UTF8.GetString(e.Data).Split('!');
-                switch (Info[0])
+                switch (Decode.GetMessageHead(e.Data))
                 {
-                    case "monitorOpen":
+                    case OrderMessageType.MonitorOpen:
                         string key = DateTime.Now.ToString();
+                        MonitorOpen Info = Decode.MonitorOpen(e.Data);
                         LocalPlay LocalPlay = new LocalPlay(Info, new RealVideoDataConnect(Info), key);
                         Resource.videoDic.TryAdd(key, LocalPlay);
                         LocalPlay.Connect.LocalPlay = LocalPlay;

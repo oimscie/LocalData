@@ -1,4 +1,5 @@
 ﻿using LocalData.CHCNETSDK;
+using LocalData.OrderMessage;
 using LocalData.staticResouce;
 using SuperSocket.ClientEngine;
 using System;
@@ -14,20 +15,18 @@ namespace LocalData.SuperSocket
 {
     public class RealVideoDataConnect
     {
-        private readonly string Company;
         private readonly AsyncTcpSession client;
         private readonly string ip = ConfigurationManager.AppSettings["ServerIp"];
         private readonly int port = 8091;
-        public string CameraIp { get; set; }
-        public string CameraPort { get; set; }
-        public string Brand { get; set; }
+        private readonly PacketForm PacketForm;
+        private readonly OrderMessageDecode Decode;
+        public MonitorOpen carameInfo;
         public LocalPlay LocalPlay = null;
-        public RealVideoDataConnect(string[] Infos)
+        public RealVideoDataConnect(MonitorOpen Info)
         {
-            Company = ConfigurationManager.AppSettings["Company"];
-            CameraIp = Infos[2];
-            CameraPort = Infos[3];
-            Brand = Infos[6];
+            PacketForm = new PacketForm();
+            Decode = new OrderMessageDecode();
+            carameInfo = Info;
             client = new AsyncTcpSession();
             // 连接断开事件
             client.Closed += client_Closed;
@@ -51,18 +50,23 @@ namespace LocalData.SuperSocket
 
         void client_Connected(object sender, EventArgs e)
         {
-            string str = "monitorUpload!" + Company + "!" + CameraIp + "!" + CameraPort + "!0!0!" + 0 + "!";
-            Send(Encoding.UTF8.GetBytes(str).Concat(new byte[] { 11, 22, 33, 44 }).ToArray());
+            Send(PacketForm.MonitorUpload(new MonitorUpload() { 
+            messageType=OrderMessageType.MonitorUpload,
+            Company=carameInfo.Company,
+            CameraIP= carameInfo.CameraIP,
+            CameraPort= carameInfo.CameraPort,
+            Brand= carameInfo.Brand
+            }));
             FormUtil.ModifyLable(DataForm.MainForm.Video, "已连接", Color.Green);
         }
 
         void client_DataReceived(object sender, DataEventArgs e)
         {
             string[] Info = Encoding.UTF8.GetString(e.Data).Split('!');
-            switch (Info[0])
+            switch (Decode.GetMessageHead(e.Data))
             {
-                case "Control":
-                    LocalPlay.PTZControl(Info[1].Split(','));
+                case OrderMessageType.MonitorControl:
+                    LocalPlay.PTZControl(Decode.MonitorControl(e.Data));
                     break;
             }          
         }

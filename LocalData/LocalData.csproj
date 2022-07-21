@@ -156,6 +156,10 @@
     <Compile Include="MySql\MySqlHelper.cs" />
     <Compile Include="MySql\RecTrans.cs" />
     <Compile Include="MySql\sqlHelper.cs" />
+    <Compile Include="OrderMessage\OrderMessageType.cs" />
+    <Compile Include="OrderMessage\OrderMessageBody.cs" />
+    <Compile Include="OrderMessage\OrderMessageDecode.cs" />
+    <Compile Include="OrderMessage\PacketForm.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="staticResouce\resource.cs" />
