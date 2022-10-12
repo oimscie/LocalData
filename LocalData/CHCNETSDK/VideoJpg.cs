@@ -23,6 +23,7 @@ namespace LocalData.CHCNETSDK
         private Socket client;
         private readonly MySqlHelper mysql;
         private List<Dictionary<string, string>> dic;
+        private bool IsUpdate = false;
 
         public VideoJpg()
         {
@@ -30,25 +31,11 @@ namespace LocalData.CHCNETSDK
             mark = new byte[] { 11, 22, 33, 44 };
             mysql = new MySqlHelper();
 
-            Thread Thread1 = new Thread(UpdateVideoInfoTimer)
-            {
-                IsBackground = true
-            };
-            Thread1.Start();
-
             Thread Thread2 = new Thread(UpdateJpgTimer)
             {
                 IsBackground = true
             };
             Thread2.Start();
-        }
-
-        private void UpdateVideoInfoTimer()
-        {
-            System.Timers.Timer UpdateVideoInfoTimer = new System.Timers.Timer(1000 * 20);
-            UpdateVideoInfoTimer.Elapsed += new ElapsedEventHandler(UpdateVideoInfo);
-            UpdateVideoInfoTimer.AutoReset = true;
-            UpdateVideoInfoTimer.Enabled = true;
         }
 
         private void UpdateJpgTimer()
@@ -60,28 +47,29 @@ namespace LocalData.CHCNETSDK
         }
 
         /// <summary>
-        /// 更新监控信息
+        /// 更新监控预览图
         /// </summary>
         /// <param name="source"></param>
         /// <param name="e"></param>
-        private void UpdateVideoInfo(object source, System.Timers.ElapsedEventArgs e)
-        {
-            string sql = "select NAME,IP,PORT,USERNAME,PASSWORD,BRAND from list_monitor where COMPANY='" + Company + "'";
-            dic = mysql.MultipleSelect(sql, new List<string>() { "NAME", "IP", "PORT", "USERNAME", "PASSWORD", "BRAND" });
-        }
-
         private void UpdateJpg(object source, ElapsedEventArgs e)
         {
-            foreach (var item in dic)
+            if (!IsUpdate)
             {
-                LocalPlay Local = new LocalPlay(item["IP"], item["PORT"], item["USERNAME"], item["PASSWORD"]);
-                if (FileUtils.DirExit(@"D:/localData/", true))
+                IsUpdate = true;
+                string sql = "select NAME,IP,PORT,USERNAME,PASSWORD,BRAND from list_monitor where COMPANY='" + Company + "'";
+                dic = mysql.MultipleSelect(sql, new List<string>() { "NAME", "IP", "PORT", "USERNAME", "PASSWORD", "BRAND" });
+                foreach (var item in dic)
                 {
-                    if (Local.GetJpg(@"D:/localData/" + item["NAME"] + ".jpg"))
+                    LocalPlay Local = new LocalPlay(item["IP"], item["PORT"], item["USERNAME"], item["PASSWORD"]);
+                    if (FileUtils.DirExit(@"D:/localData/", true))
                     {
-                        SendFile(@"D:/localData/" + item["NAME"] + ".jpg");
+                        if (Local.GetJpg(@"D:/localData/" + item["NAME"] + ".jpg"))
+                        {
+                            SendFile(@"D:/localData/" + item["NAME"] + ".jpg");
+                        }
                     }
                 }
+                IsUpdate = false;
             }
         }
 
