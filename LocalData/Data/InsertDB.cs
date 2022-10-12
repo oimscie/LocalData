@@ -377,7 +377,7 @@ namespace LocalData.Data
             {
                 if (File.Exists("@D:/localData/LoadError.txt"))
                 {
-                    List<string> lines = new List<string>(File.ReadAllLines("LoadError.txt"));
+                    List<string> lines = new List<string>(File.ReadAllLines("@D:/localData/LoadError.txt"));
                     File.Delete("@D:/localData/LoadError.txt");
                     foreach (var item in lines)
                     {
