@@ -19,12 +19,13 @@ namespace LocalData.Data
         private readonly MySqlHelper mysql;
         private readonly string Company;
         private readonly string date;
+
         public CountWeight(string dates)
         {
             Company = ConfigurationManager.AppSettings["Company"];
             mysql = new MySqlHelper();
             date = DateTime.Parse(dates).AddDays(-1).ToShortDateString();
-            Count(null,null);
+            Count(null, null);
             date = dates;
             Thread thread = new Thread(CountTimer)
             {
@@ -32,12 +33,15 @@ namespace LocalData.Data
             };
             thread.Start();
         }
-        private void Count(object source, System.Timers.ElapsedEventArgs e) {
+
+        private void Count(object source, System.Timers.ElapsedEventArgs e)
+        {
             CountTransHourAndDayByVehicle(date);
             CountTransHourAndDayByDriver(date);
             CountSpade(date);
             CountSpadeHourAndDayByDriver(date);
         }
+
         private void CountTimer()
         {
             System.Timers.Timer Timer = new System.Timers.Timer(1000 * 60 * 15);
@@ -47,6 +51,7 @@ namespace LocalData.Data
         }
 
         #region//车辆运输统计
+
         /// <summary>
         /// 指定日期的各小时与全天运输统计
         /// </summary>
@@ -116,7 +121,7 @@ namespace LocalData.Data
                     {
                         float TotalWeight = 0;//当前车辆当前日期运输异常总量
                         float TotalCount = 0;//当前车辆当前日期运输运输报警总次数
-                        sql = "select  Count(ID) as Count,SUM(WEIGHT)as weight,HOUR(ADD_TIME) as hours from rec_unu_tran where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours";
+                        sql = "select  Count(ID) as Count,SUM(WEIGHT)as weight,HOUR(ADD_TIME) as hours from rec_unu_tran where REC_STATE='YES' and VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours";
                         List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, new List<string>() { "Count", "weight", "hours" });
                         if (result != null)
                         {
@@ -136,7 +141,7 @@ namespace LocalData.Data
                             sql = "update count_sys_day set UNTRANS='" + TotalCount + "',UNUSUAL_WEIGHT='" + TotalWeight + "' where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "'";
                             mysql.UpdOrInsOrdel(sql);
                         }
-                    } 
+                    }
                 }
                 FormUtil.ModifyLable(DataForm.MainForm.Loadometer, "正常", Color.Green);
             }
@@ -146,8 +151,10 @@ namespace LocalData.Data
                 LogHelper.WriteLog("计算错误-----" + ex);
             }
         }
+
         #endregion
         #region//司机运输统计
+
         public void CountTransHourAndDayByDriver(string date)
         {
             //获取运输司机
@@ -240,12 +247,12 @@ namespace LocalData.Data
                 FormUtil.ModifyLable(DataForm.MainForm.Loadometer, "错误", Color.Red);
                 LogHelper.WriteLog("计算错误-----" + ex);
             }
-
-
         }
+
         #endregion
 
         #region//车辆铲装统计
+
         public void CountSpade(string date)
         {
             //获取铲装车辆
@@ -308,11 +315,12 @@ namespace LocalData.Data
                 FormUtil.ModifyLable(DataForm.MainForm.Loadometer, "错误", Color.Red);
                 LogHelper.WriteLog("计算错误-----" + ex);
             }
-
         }
+
         #endregion
 
         #region//司机铲装统计
+
         public void CountSpadeHourAndDayByDriver(string date)
         {
             //获取铲装司机
@@ -379,6 +387,7 @@ namespace LocalData.Data
                 LogHelper.WriteLog("计算错误-----" + ex);
             }
         }
+
         #endregion
     }
 }
