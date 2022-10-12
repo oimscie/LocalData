@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -9,6 +10,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Timers;
+using System.Windows.Forms;
 
 namespace LocalData.CHCNETSDK
 {
@@ -21,6 +23,7 @@ namespace LocalData.CHCNETSDK
         private Socket client;
         private readonly MySqlHelper mysql;
         private List<Dictionary<string, string>> dic;
+
         public VideoJpg()
         {
             Company = ConfigurationManager.AppSettings["Company"];
@@ -39,6 +42,7 @@ namespace LocalData.CHCNETSDK
             };
             Thread2.Start();
         }
+
         private void UpdateVideoInfoTimer()
         {
             System.Timers.Timer UpdateVideoInfoTimer = new System.Timers.Timer(1000 * 20);
@@ -47,7 +51,6 @@ namespace LocalData.CHCNETSDK
             UpdateVideoInfoTimer.Enabled = true;
         }
 
-
         private void UpdateJpgTimer()
         {
             System.Timers.Timer UpdateJpgTimer = new System.Timers.Timer(1000 * 30);
@@ -55,6 +58,7 @@ namespace LocalData.CHCNETSDK
             UpdateJpgTimer.AutoReset = true;
             UpdateJpgTimer.Enabled = true;
         }
+
         /// <summary>
         /// 更新监控信息
         /// </summary>
@@ -71,12 +75,16 @@ namespace LocalData.CHCNETSDK
             foreach (var item in dic)
             {
                 LocalPlay Local = new LocalPlay(item["IP"], item["PORT"], item["USERNAME"], item["PASSWORD"]);
-                if (Local.GetJpg(item["NAME"] + ".jpg"))
+                if (FileUtils.DirExit(@"D:/localData/", true))
                 {
-                    SendFile(item["NAME"] + ".jpg");
+                    if (Local.GetJpg(@"D:/localData/" + item["NAME"] + ".jpg"))
+                    {
+                        SendFile(@"D:/localData/" + item["NAME"] + ".jpg");
+                    }
                 }
             }
         }
+
         /// <summary>
         /// 发送文件
         /// </summary>

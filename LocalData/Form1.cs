@@ -1,5 +1,4 @@
-﻿
-using LocalData.CHCNETSDK;
+﻿using LocalData.CHCNETSDK;
 using LocalData.Data;
 using LocalData.MySql;
 using LocalData.staticResouce;
@@ -22,6 +21,7 @@ namespace LocalData
         public static DataForm MainForm;
         private readonly string Company;
         private readonly MySqlHelper MySqlHelper;
+
         public DataForm()
         {
             InitializeComponent();
@@ -34,6 +34,7 @@ namespace LocalData
             Resource.IsStart = true;
             MySqlHelper = new MySqlHelper();
         }
+
         private void DataForm_Load(object sender, EventArgs e)
         {
             //自启动
@@ -47,46 +48,50 @@ namespace LocalData
             };
             load.Start();
         }
+
         public struct CopyDataStruct
         {
             public IntPtr dwData;
             public int cbData;
+
             [MarshalAs(UnmanagedType.LPStr)]
             public string lpData;
         }
 
         public const int WM_COPYDATA = 0x004A;
 
-        //通过窗口标题来查找窗口句柄   
+        //通过窗口标题来查找窗口句柄
         [DllImport("User32.dll", EntryPoint = "FindWindow")]
         private static extern int FindWindow(string lpClassName, string lpWindowName);
 
-        //在DLL库中的发送消息函数  
+        //在DLL库中的发送消息函数
         [DllImport("User32.dll", EntryPoint = "SendMessage")]
         private static extern int SendMessage
             (
-            int hWnd,                        // 目标窗口的句柄    
-            int Msg,                         // 在这里是WM_COPYDATA  
-            int wParam,                      // 第一个消息参数  
-            ref CopyDataStruct lParam        // 第二个消息参数  
+            int hWnd,                        // 目标窗口的句柄
+            int Msg,                         // 在这里是WM_COPYDATA
+            int wParam,                      // 第一个消息参数
+            ref CopyDataStruct lParam        // 第二个消息参数
            );
 
         //发送消息
         public static void SendMessage(string str)
         {
-            try {
+            try
+            {
                 string strURL = str;
                 CopyDataStruct cds;
-                cds.dwData = (IntPtr)1; //这里可以传入一些自定义的数据，但只能是4字节整数        
-                cds.lpData = strURL;    //消息字符串  
-                cds.cbData = System.Text.Encoding.Default.GetBytes(strURL).Length + 1; //注意，这里的长度是按字节来算的  
+                cds.dwData = (IntPtr)1; //这里可以传入一些自定义的数据，但只能是4字节整数
+                cds.lpData = strURL;    //消息字符串
+                cds.cbData = System.Text.Encoding.Default.GetBytes(strURL).Length + 1; //注意，这里的长度是按字节来算的
                 SendMessage(FindWindow(null, "Gama"), WM_COPYDATA, 0, ref cds);       // 窗口标题
-            } catch {
-            
-            }   
+            }
+            catch
+            {
+            }
         }
 
-        //接收消息方法  
+        //接收消息方法
         protected override void WndProc(ref System.Windows.Forms.Message e)
         {
             if (e.Msg == WM_COPYDATA)
@@ -96,7 +101,8 @@ namespace LocalData
                 {
                     FormUtil.ModifyLable(tsslServerState, cds.lpData.ToString(), Color.Green);
                 }
-                else {
+                else
+                {
                     FormUtil.ModifyLable(tsslServerState, cds.lpData.ToString(), Color.Red);
                 }
             }
@@ -113,12 +119,12 @@ namespace LocalData
                 Process.Start(appName);
                 return true;
             }
-            catch 
+            catch
             {
-              
             }
             return false;
         }
+
         /// <summary>
         /// 强制关闭外部程序
         /// </summary>
@@ -136,6 +142,7 @@ namespace LocalData
             }
             return false;
         }
+
         /// <summary>
         /// 后台线程初始化
         /// </summary>
@@ -172,15 +179,16 @@ namespace LocalData
             };
             InserDb.Start();
             new CountMonths(DateTime.Now.ToString("yyyy-MM-dd"));
-              new CountWeight(DateTime.Now.ToString("yyyy-MM-dd"));
-              new CountFuel(DateTime.Now.ToString("yyyy-MM-dd"));
-              new CountMileage(DateTime.Now.ToString("yyyy-MM-dd"));
-              new CountMonths(DateTime.Now.ToString("yyyy-MM-dd"));
-              new CountGama();
-              new FuelFit();
-              new VideoJpg();
+            new CountWeight(DateTime.Now.ToString("yyyy-MM-dd"));
+            new CountFuel(DateTime.Now.ToString("yyyy-MM-dd"));
+            new CountMileage(DateTime.Now.ToString("yyyy-MM-dd"));
+            new CountMonths(DateTime.Now.ToString("yyyy-MM-dd"));
+            new CountGama();
+            new FuelFit();
+            new VideoJpg();
             FormUtil.ModifyLable(MainForm.State, "正在运行", Color.Green);
         }
+
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (e.CloseReason == CloseReason.UserClosing)
@@ -213,6 +221,7 @@ namespace LocalData
                 }
             }
         }
+
         /// <summary>
         ///  数据源更新
         /// </summary>
@@ -223,6 +232,7 @@ namespace LocalData
             dataSouth.AutoReset = true;
             dataSouth.Enabled = true;
         }
+
         private void UpdateState(object source, ElapsedEventArgs e)
         {
             string sql = "select VEHICLE_ID ,DRIVER,WEIGHT,STATE,REAL_PANEL,ADD_TIME from temp_load_trans where company='" + Company + "' and to_days(ADD_TIME)=to_days(now()) order by ADD_TIME desc limit 0,20";
@@ -260,6 +270,7 @@ namespace LocalData
                 }
             }
         }
+
         /// <summary>
         /// 单元格内容居中
         /// </summary>

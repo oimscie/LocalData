@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,38 +19,47 @@ namespace LocalData.Data
         /// mysql实体
         /// </summary>
         private readonly MySqlHelper mysql;
+
         /// <summary>
         /// 车辆编号字段
         /// </summary>
         private readonly string Carid;
+
         /// <summary>
         /// 净重字段
         /// </summary>
         private readonly string Weight;
+
         /// <summary>
         /// 时间字段
         /// </summary>
         private readonly string Time;
+
         /// <summary>
         /// 公司名称
         /// </summary>
         private readonly string Company;
+
         /// <summary>
         /// 窜铲检测识别距离
         /// </summary>
         private readonly double ExceDistance;
+
         /// <summary>
         /// 装车时间
         /// </summary>
         private readonly double LoadTime;
+
         /// <summary>
         /// 车辆信息及采面数据库字段集合
         /// </summary>
         private readonly List<string> VehicleInfoFieldName;
+
         /// <summary>
         /// 车辆状态表数据库字段集合
         /// </summary>
         private readonly List<string> VehicleStateFieldName;
+
         /// <summary>
         /// 运输车车分配及采面品位信息,车辆编号为key
         /// item1：采面
@@ -59,12 +69,14 @@ namespace LocalData.Data
         /// item5：na
         /// </summary>
         private readonly Dictionary<string, ValueTuple<string, string, string, string, string>> TransInfo;
+
         /// <summary>
         /// 挖掘机分配信息，车辆编号为key
         /// item1：采面名称
         /// item2：司机姓名
         /// </summary>
         private readonly Dictionary<string, ValueTuple<string, string>> spadeInfo;
+
         /// <summary>
         /// 采面品位信息,采面名称为key
         /// item1：ca
@@ -72,30 +84,38 @@ namespace LocalData.Data
         /// item3：na
         /// </summary>
         private readonly Dictionary<string, ValueTuple<string, string, string>> panelInfo;
+
         /// <summary>
         /// 采面上挖掘机信息,采面名称为key
         /// item1：司机
         /// item2：挖掘机编号
         /// </summary>
         private readonly Dictionary<string, ValueTuple<string, string>> panelSpadeInfo;
+
         /// <summary>
         /// 记录重补定时器
         /// </summary>
         private System.Timers.Timer LogTimer;
+
         private Dictionary<string, string> logdic;
+
         /// <summary>
         ///  铲车状态表字典，key为车辆编号，valueTuple<x坐标，y坐标，时间,fid>
         /// </summary>
-        Dictionary<string, ValueTuple<string, string, string, string>> spade;
+        private Dictionary<string, ValueTuple<string, string, string, string>> spade;
+
         /// <summary>
         ///  运输车状态表字典，key为车辆编号，valueTuple<x坐标，y坐标，时间,fid>
         /// </summary>
-        Dictionary<string, ValueTuple<string, string, string, string>> trans;
+        private Dictionary<string, ValueTuple<string, string, string, string>> trans;
+
         /// <summary>
         /// 触发报警的运输车字典（车辆编号---触发时间）
         /// </summary>
         private ConcurrentDictionary<string, string> VehicleWarn;
+
         private bool isRead = false;
+
         public InsertDB()
         {
             Carid = ConfigurationManager.AppSettings["InCarid"];
@@ -103,7 +123,7 @@ namespace LocalData.Data
             Time = ConfigurationManager.AppSettings["InTime"];
             Company = ConfigurationManager.AppSettings["Company"];
             ExceDistance = double.Parse(ConfigurationManager.AppSettings["ExceDistance"]);
-            LoadTime= double.Parse(ConfigurationManager.AppSettings["LoadTime"]);
+            LoadTime = double.Parse(ConfigurationManager.AppSettings["LoadTime"]);
             TransInfo = new Dictionary<string, (string, string, string, string, string)>();
             spadeInfo = new Dictionary<string, (string, string)>();
             panelSpadeInfo = new Dictionary<string, (string, string)>();
@@ -128,17 +148,20 @@ namespace LocalData.Data
             {
                 IsBackground = true
             };
-            loadErrorThread.Start();       
+            loadErrorThread.Start();
         }
+
         public void InsertServerDB()
         {
             Thread.Sleep(15000);
             while (Resource.IsStart)
             {
-                    if (Resource.insertDb.Count > 0)
+                if (Resource.insertDb.Count > 0)
+                {
+                    try
                     {
-                        try {
-                        while (isRead) {
+                        while (isRead)
+                        {
                             Thread.Sleep(2);
                         }
                         isRead = true;
@@ -157,7 +180,7 @@ namespace LocalData.Data
                                 {
                                     using (StreamWriter file = new StreamWriter("LoadError.txt", true))
                                     {
-                                        file.WriteLine(val[Carid] + "," + val[Weight] + "," + val[Time]);// 直接追加文件末尾，换行 
+                                        file.WriteLine(val[Carid] + "," + val[Weight] + "," + val[Time]);// 直接追加文件末尾，换行
                                     }
                                     continue;
                                 }
@@ -202,9 +225,9 @@ namespace LocalData.Data
                         int result = mysql.UpdOrInsOrdel(sql);
                         if (result == 0)
                         {
-                            using (StreamWriter file = new StreamWriter("LoadError.txt", true))
+                            using (StreamWriter file = new StreamWriter("@D:/localData/LoadError.txt", true))
                             {
-                                file.WriteLine(val[Carid] + "," + val[Weight] + "," + val[Time]);// 直接追加文件末尾，换行 
+                                file.WriteLine(val[Carid] + "," + val[Weight] + "," + val[Time]);// 直接追加文件末尾，换行
                             }
                             continue;
                         }
@@ -221,20 +244,22 @@ namespace LocalData.Data
                             mysql.UpdOrInsOrdel(sql);
                         }
                     }
-                        catch (Exception e)
-                        {
-                            LogHelper.WriteLog("意外错误", e);
-                        }
-                        finally {
-                        isRead = false;
-                        }
-                    }
-                    else
+                    catch (Exception e)
                     {
-                        Thread.Sleep(5000);
+                        LogHelper.WriteLog("意外错误", e);
                     }
+                    finally
+                    {
+                        isRead = false;
+                    }
+                }
+                else
+                {
+                    Thread.Sleep(5000);
+                }
             }
         }
+
         /// <summary>
         /// 获取车辆分配及采面品位信息定时
         /// </summary>
@@ -245,6 +270,7 @@ namespace LocalData.Data
             getInfoTimer.AutoReset = true;
             getInfoTimer.Enabled = true;
         }
+
         /// <summary>
         /// 获取车辆分配及采面品位信息
         /// </summary>
@@ -296,12 +322,10 @@ namespace LocalData.Data
                         if (spadeInfo.ContainsKey(vid))
                         {
                             spadeInfo[vid] = new ValueTuple<string, string>(panel, driver);
-
                         }
                         else
                         {
                             spadeInfo.Add(vid, new ValueTuple<string, string>(panel, driver));
-
                         }
                         if (panelSpadeInfo.ContainsKey(panel))
                         {
@@ -341,6 +365,7 @@ namespace LocalData.Data
             LogTimer.AutoReset = true;
             LogTimer.Enabled = true;
         }
+
         /// <summary>
         /// 重补错误记录
         /// </summary>
@@ -350,10 +375,10 @@ namespace LocalData.Data
         {
             try
             {
-                if (File.Exists("LoadError.txt"))
+                if (File.Exists("@D:/localData/LoadError.txt"))
                 {
                     List<string> lines = new List<string>(File.ReadAllLines("LoadError.txt"));
-                    File.Delete("LoadError.txt");
+                    File.Delete("@D:/localData/LoadError.txt");
                     foreach (var item in lines)
                     {
                         string[] log = item.Split(',');
@@ -380,7 +405,6 @@ namespace LocalData.Data
             LogTimer.AutoReset = true;
             LogTimer.Enabled = true;
         }
-
 
         //窜铲检查
         public void CheckTrans(object source, System.Timers.ElapsedEventArgs e)
@@ -423,12 +447,14 @@ namespace LocalData.Data
                             }
                         }
                         break;
+
                     case "挖掘机":
                         if (spadeInfo.ContainsKey(vid))
                         {
                             spade.Add(vid, new ValueTuple<string, string, string, string>(x, y, time, fid));
                         }
                         break;
+
                     default:
                         break;
                 }
@@ -437,9 +463,10 @@ namespace LocalData.Data
             foreach (var transItem in trans)
             {
                 foreach (var spadeItem in spade)
-                {    
+                {
                     //判断当前运输车所在采面是否分配了铲车
-                    if (!panelSpadeInfo.ContainsKey(TransInfo[transItem.Key].Item1)) {
+                    if (!panelSpadeInfo.ContainsKey(TransInfo[transItem.Key].Item1))
+                    {
                         continue;
                     }
                     //判断即将计算的运输车与挖掘机是否与服务器采面分配一致

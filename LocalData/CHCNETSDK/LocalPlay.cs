@@ -5,8 +5,10 @@ using SuperSocket.ClientEngine;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Net.Sockets;
+using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -22,9 +24,7 @@ namespace LocalData.CHCNETSDK
         public string Brand { get; set; }
         public AsyncTcpSession Sockets { get; set; }
 
-
         public Socket Socket { get; set; }
-
 
         public int M_lUserID { get; set; }
         public int M_lRealHandle { get; set; }
@@ -36,10 +36,12 @@ namespace LocalData.CHCNETSDK
         private CHCNetSDK.REALDATACALLBACK RealDataCallBack = null;
         public RealVideoDataConnect Connect;
         public readonly string key;
+
         public bool NET_DVR_Init()
         {
             return CHCNetSDK.NET_DVR_Init();
         }
+
         public LocalPlay(MonitorOpen order, RealVideoDataConnect Connects, string keys)
         {
             key = keys;
@@ -55,7 +57,9 @@ namespace LocalData.CHCNETSDK
             M_lRealHandle = -1;
             ChannelId = 1;
         }
-        public LocalPlay(string ip, string port, string username, string password) {
+
+        public LocalPlay(string ip, string port, string username, string password)
+        {
             CameraIp = ip;
             CameraPort = port;
             UserName = username;
@@ -64,13 +68,14 @@ namespace LocalData.CHCNETSDK
             M_lRealHandle = -1;
             ChannelId = 1;
         }
+
         private bool Login()
         {
             CHCNetSDK.NET_DVR_DEVICEINFO_V30 DeviceInfo = new CHCNetSDK.NET_DVR_DEVICEINFO_V30();
             M_lUserID = CHCNetSDK.NET_DVR_Login_V30(CameraIp, int.Parse(CameraPort), UserName, PassWord, ref DeviceInfo);
             if (M_lUserID < 0)
             {
-                LogHelper.WriteLog("登录错误"+CHCNetSDK.NET_DVR_GetLastError().ToString());
+                LogHelper.WriteLog("登录错误" + CHCNetSDK.NET_DVR_GetLastError().ToString());
                 return false;
             }
             else
@@ -82,10 +87,12 @@ namespace LocalData.CHCNETSDK
                 return true;
             }
         }
+
         public void LoginOut()
         {
             CHCNetSDK.NET_DVR_Logout(M_lUserID);
         }
+
         public void LivePlay()
         {
             try
@@ -97,7 +104,7 @@ namespace LocalData.CHCNETSDK
                 }
                 NET_DVR_Init();
                 RealData = new ConcurrentQueue<byte[]>();
-                if (!Login()){return;} 
+                if (!Login()) { return; }
                 Thread thread = new Thread(SendRealData)
                 {
                     IsBackground = true
@@ -129,6 +136,7 @@ namespace LocalData.CHCNETSDK
                 LogHelper.WriteLog("监控错误---", e);
             }
         }
+
         /// <summary>
         /// 截图
         /// </summary>
@@ -141,24 +149,27 @@ namespace LocalData.CHCNETSDK
                 LogHelper.WriteLog(CHCNetSDK.NET_DVR_GetLastError().ToString());
                 return false;
             }
-            if (!Login()) {
+            if (!Login())
+            {
                 return false;
             }
+
             CHCNetSDK.NET_DVR_JPEGPARA lpJpegPara = new CHCNetSDK.NET_DVR_JPEGPARA
             {
                 wPicQuality = 0, //图像质量 Image quality
-                wPicSize = 0xff //抓图分辨率 Picture size: 0xff-Auto(使用当前码流分辨率) 
+                wPicSize = 0xff //抓图分辨率 Picture size: 0xff-Auto(使用当前码流分辨率)
             };
             //JPEG抓图保存成文件 Capture a JPEG picture
             if (!CHCNetSDK.NET_DVR_CaptureJPEGPicture(M_lUserID, ChannelId, ref lpJpegPara, FileName))
             {
-                LogHelper.WriteLog("截取错误"+CHCNetSDK.NET_DVR_GetLastError().ToString());
+                LogHelper.WriteLog("截取错误" + CHCNetSDK.NET_DVR_GetLastError().ToString());
                 LoginOut();
                 return false;
             }
             LoginOut();
             return true;
         }
+
         public void RealDataCallBackS(Int32 lRealHandle, UInt32 dwDataType, IntPtr pBuffer, UInt32 dwBufSize, IntPtr pUser)
         {
             if (IsSend && dwBufSize > 0)
@@ -168,6 +179,7 @@ namespace LocalData.CHCNETSDK
                 RealData.Enqueue(sData);
             }
         }
+
         public void StopPlay()
         {
             IsSend = false;
@@ -178,6 +190,7 @@ namespace LocalData.CHCNETSDK
                 LoginOut();
             }
         }
+
         private void SendRealData()
         {
             while (IsSend)
@@ -203,6 +216,7 @@ namespace LocalData.CHCNETSDK
                 }
             }
         }
+
         public bool PTZControl(MonitorControl Control)
         {
             switch (Control.OperationType)
@@ -213,88 +227,104 @@ namespace LocalData.CHCNETSDK
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.TILT_UP, 0, 7);
                             return false;
+
                         case "1":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.TILT_UP, 1, 7);
                             return false;
                     }
                     return false;
+
                 case MonitorOperationType.down:
                     switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.TILT_DOWN, 0, 7);
                             return false;
+
                         case "1":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.TILT_DOWN, 1, 7);
                             return false;
                     }
                     return false;
+
                 case MonitorOperationType.left:
                     switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.PAN_LEFT, 0, 7);
                             return false;
+
                         case "1":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.PAN_LEFT, 1, 7);
                             return false;
                     }
                     return false;
+
                 case MonitorOperationType.right:
                     switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.PAN_RIGHT, 0, 7);
                             return false;
+
                         case "1":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.PAN_RIGHT, 1, 7);
                             return false;
                     }
                     return false;
+
                 case MonitorOperationType.amplification:
                     switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.FOCUS_NEAR, 0, 7);
                             return false;
+
                         case "1":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.FOCUS_NEAR, 1, 7);
                             return false;
                     }
                     return false;
+
                 case MonitorOperationType.narrow:
                     switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.FOCUS_FAR, 0, 7);
                             return false;
+
                         case "1":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.FOCUS_FAR, 1, 7);
                             return false;
                     }
                     return false;
+
                 case MonitorOperationType.forward:
                     switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.ZOOM_IN, 0, 7);
                             return false;
+
                         case "1":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.ZOOM_IN, 1, 7);
                             return false;
                     }
                     return false;
+
                 case MonitorOperationType.back:
                     switch (Control.StartOrStop)
                     {
                         case "0":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.ZOOM_OUT, 0, 7);
                             return false;
+
                         case "1":
                             CHCNetSDK.NET_DVR_PTZControlWithSpeed_Other(M_lUserID, ChannelId, CHCNetSDK.ZOOM_OUT, 1, 7);
                             return false;
                     }
                     return false;
+
                 default:
                     return true;
             }

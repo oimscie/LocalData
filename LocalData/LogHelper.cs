@@ -15,17 +15,29 @@ namespace LocalData
 
         public static void WriteLog(string info)
         {
-            if (log_info.IsInfoEnabled)
+            try
             {
-                log_info.Info(info);
+                if (log_info.IsInfoEnabled)
+                {
+                    log_info.Info(info);
+                }
+            }
+            catch
+            {
             }
         }
 
         public static void WriteLog(string error, Exception ex)
         {
-            if (log_error.IsErrorEnabled)
+            try
             {
-                log_error.Error(error, ex);
+                if (log_error.IsErrorEnabled)
+                {
+                    log_error.Error(error, ex);
+                }
+            }
+            catch
+            {
             }
         }
     }

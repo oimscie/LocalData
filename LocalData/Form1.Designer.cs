@@ -524,13 +524,13 @@
         private System.Windows.Forms.ToolStripMenuItem Recover;
         private System.Windows.Forms.ToolStripMenuItem Closeds;
         public System.Windows.Forms.ToolTip toolTip1;
-        private System.Windows.Forms.Label State;
         private System.Windows.Forms.DataGridViewTextBoxColumn VEHICLE_ID;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column3;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
+        public System.Windows.Forms.Label State;
     }
 }
 

@@ -22,6 +22,7 @@ namespace LocalData.SuperSocket
         private readonly OrderMessageDecode Decode;
         public MonitorOpen carameInfo;
         public LocalPlay LocalPlay = null;
+
         public RealVideoDataConnect(MonitorOpen Info)
         {
             PacketForm = new PacketForm();
@@ -37,38 +38,42 @@ namespace LocalData.SuperSocket
             // 发生错误的处理
             client.Error += client_Error;
         }
+
         public AsyncTcpSession GetClient()
         {
             return client;
         }
-        void client_Error(object sender, ErrorEventArgs e)
+
+        private void client_Error(object sender, ErrorEventArgs e)
         {
-            FormUtil.ModifyLable(DataForm.MainForm.Video, "断开",Color.Green);
+            FormUtil.ModifyLable(DataForm.MainForm.Video, "断开", Color.Green);
             LogHelper.WriteLog("视频服务传输错误", e.Exception);
             LocalPlay.StopPlay();
         }
 
-        void client_Connected(object sender, EventArgs e)
+        private void client_Connected(object sender, EventArgs e)
         {
-            Send(PacketForm.MonitorUpload(new MonitorUpload() { 
-            messageType=OrderMessageType.MonitorUpload,
-            Company=carameInfo.Company,
-            CameraIP= carameInfo.CameraIP,
-            CameraPort= carameInfo.CameraPort,
-            Brand= carameInfo.Brand
+            Send(PacketForm.MonitorUpload(new MonitorUpload()
+            {
+                messageType = OrderMessageType.MonitorUpload,
+                Company = carameInfo.Company,
+                CameraIP = carameInfo.CameraIP,
+                CameraPort = carameInfo.CameraPort,
+                Brand = carameInfo.Brand
             }));
             FormUtil.ModifyLable(DataForm.MainForm.Video, "已连接", Color.Green);
         }
 
-        void client_DataReceived(object sender, DataEventArgs e)
+        private void client_DataReceived(object sender, DataEventArgs e)
         {
-            string[] Info = Encoding.UTF8.GetString(e.Data).Split('!');
-            switch (Decode.GetMessageHead(e.Data))
+            byte[] buffer = new byte[e.Length];
+            Buffer.BlockCopy(e.Data, e.Offset, buffer, 0, e.Length);
+            switch (Decode.GetMessageHead(buffer))
             {
                 case OrderMessageType.MonitorControl:
-                    LocalPlay.PTZControl(Decode.MonitorControl(e.Data));
+                    LocalPlay.PTZControl(Decode.MonitorControl(buffer));
                     break;
-            }          
+            }
         }
 
         public void client_Closed(object sender, EventArgs e)
@@ -103,6 +108,5 @@ namespace LocalData.SuperSocket
                 client.Send(data, 0, data.Length);
             }
         }
-
     }
 }

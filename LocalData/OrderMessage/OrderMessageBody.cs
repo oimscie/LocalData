@@ -65,6 +65,10 @@ namespace LocalData.OrderMessage
         /// 码流类型
         /// </summary>
         public string datatypes;
+        /// <summary>
+        /// 终端1078版本
+        /// </summary>
+        public string version1078;
     }
     /// <summary>
     /// 车载历史音视频请求请求
@@ -141,6 +145,10 @@ namespace LocalData.OrderMessage
         /// 终端SIM
         /// </summary>
         public string sim;
+        /// <summary>
+        /// 终端1078版本
+        /// </summary>
+        public string version1078;
     }
     /// <summary>
     /// 客户端登录
