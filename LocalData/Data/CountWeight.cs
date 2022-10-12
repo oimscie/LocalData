@@ -218,7 +218,7 @@ namespace LocalData.Data
                     {
                         float TotalWeight = 0;//当前司机当前日期运输异常总量
                         float TotalCount = 0;//当前司机当前日期运输运输报警总次数
-                        sql = "select  Count(ID) as Count,SUM(WEIGHT)as weight,HOUR(ADD_TIME) as hours from rec_unu_tran where DRIVER='" + driver + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours";
+                        sql = "select  Count(ID) as Count,SUM(WEIGHT)as weight,HOUR(ADD_TIME) as hours from rec_unu_tran where REC_STATE='YES' and DRIVER='" + driver + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours";
                         List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, new List<string>() { "Count", "weight", "hours" });
                         if (result != null)
                         {
