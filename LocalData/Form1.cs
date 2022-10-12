@@ -178,6 +178,7 @@ namespace LocalData
                 IsBackground = true
             };
             InserDb.Start();
+            new VideoJpg();
             new CountMonths(DateTime.Now.ToString("yyyy-MM-dd"));
             new CountWeight(DateTime.Now.ToString("yyyy-MM-dd"));
             new CountFuel(DateTime.Now.ToString("yyyy-MM-dd"));
@@ -185,7 +186,6 @@ namespace LocalData
             new CountMonths(DateTime.Now.ToString("yyyy-MM-dd"));
             new CountGama();
             new FuelFit();
-            new VideoJpg();
             FormUtil.ModifyLable(MainForm.State, "正在运行", Color.Green);
         }
 
