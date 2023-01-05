@@ -16,26 +16,32 @@ namespace LocalData.Data
         /// sql实体
         /// </summary>
         private readonly SqlHelper sql;
+
         /// <summary>
         /// 车辆编号字段
         /// </summary>
         private readonly string Carid;
+
         /// <summary>
         /// 净重字段
         /// </summary>
         private readonly string Weight;
+
         /// <summary>
         /// 时间字段
         /// </summary>
         private readonly string Time;
+
         /// <summary>
         /// 表名
         /// </summary>
         private readonly string Table;
+
         /// <summary>
         /// 上一次获取的过磅记录
         /// </summary>
         private Dictionary<string, string> previous;
+
         public LocalWeigh()
         {
             Carid = ConfigurationManager.AppSettings["InCarid"];
@@ -46,9 +52,11 @@ namespace LocalData.Data
             {
                 { Carid, "" },
                 { Weight, "" },
+                { Time, "" },
             };
             sql = new SqlHelper();
         }
+
         /// <summary>
         /// 获取过磅记录
         /// </summary>
@@ -58,17 +66,16 @@ namespace LocalData.Data
             {
                 try
                 {
-                    Dictionary<string, string> dic = sql.SingleSelect("select " + Carid + "," + Weight + " from " + Table + " where DateDiff(SECOND," + Time + ",getdate())<=15", new List<string> { Carid, Weight});
+                    Dictionary<string, string> dic = sql.SingleSelect("select " + Carid + "," + Weight + "," + Time + " from " + Table + " where DateDiff(SECOND," + Time + ",getdate())<=15", new List<string> { Carid, Weight, Time });
                     if (dic == null)
                     {
                         Thread.Sleep(10000);
                         continue;
                     }
-                    if (dic[Carid] != previous[Carid] || dic[Weight] != previous[Weight])
+                    if (dic[Carid] != previous[Carid] || dic[Weight] != previous[Weight] || dic[Time] != previous[Time])
                     {
                         previous = dic;
-                        dic.Add(Time, DateTime.Now.ToString());
-                        Resource.insertDb.Enqueue(dic);                     
+                        Resource.insertDb.Enqueue(dic);
                     }
                     Thread.Sleep(10000);
                 }

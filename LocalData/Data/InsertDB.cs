@@ -46,6 +46,11 @@ namespace LocalData.Data
         private readonly double ExceDistance;
 
         /// <summary>
+        /// 禁止未知车辆过磅标识
+        /// </summary>
+        private readonly string ForbiddenUnknown;
+
+        /// <summary>
         /// 装车时间
         /// </summary>
         private readonly double LoadTime;
@@ -118,6 +123,7 @@ namespace LocalData.Data
 
         public InsertDB()
         {
+            ForbiddenUnknown = ConfigurationManager.AppSettings["ForbiddenUnknown"];
             Carid = ConfigurationManager.AppSettings["InCarid"];
             Weight = ConfigurationManager.AppSettings["InWeight"];
             Time = ConfigurationManager.AppSettings["InTime"];
@@ -162,20 +168,30 @@ namespace LocalData.Data
                     {
                         while (isRead)
                         {
-                            Thread.Sleep(2);
+                            Thread.Sleep(20);
                         }
                         isRead = true;
                         Resource.insertDb.TryDequeue(out Dictionary<string, string> val);
                         if (!TransInfo.ContainsKey(val[Carid]))
                         {
+                            string vehicleDriver = "未知";
                             //未分配车辆，不记录采面分配信息
                             string tempSql = "select VEHICLE_DRIVER from list_vehicle where COMPANY='" + Company + "' and VEHICLE_ID='" + val[Carid] + "'";
-
                             Dictionary<string, string> tempDriver = mysql.SingleSelect(tempSql, "VEHICLE_DRIVER");
                             if (tempDriver != null)
                             {
+                                vehicleDriver = tempDriver["VEHICLE_DRIVER"];
+                            }
+                            if (ForbiddenUnknown == "true")
+                            {
+                                //系统外车辆过磅，禁止计入
+                                tempSql = "INSERT INTO `rec_unu_info`( `WARN_USER_ID`, `WARN_USER_TYPE`, `WARNTYPE`, `INFO`, `DRIVER`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ('" + val[Carid] + "', '车辆', '无效过磅', '系统外车辆或系统内未分配任务车辆过磅，已禁止计入', '未知司机', '" + Company + "', '" + val[Time] + "', NULL, NULL, NULL, NULL);";
+                                mysql.UpdOrInsOrdel(tempSql);
+                            }
+                            else
+                            {
                                 //存入永久表
-                                tempSql = "INSERT INTO `load_trans`( `VEHICLE_ID`, `DRIVER`, `WEIGHT`, `STATE`, `REAL_PANEL`, `CA`, `MG`, `NA`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ( '" + val[Carid] + "', '" + tempDriver["VEHICLE_DRIVER"] + "', '" + float.Parse(val[Weight]) + "', '正常', '未分配', '0', '0', '0', '" + Company + "', '" + val[Time] + "', NULL, NULL, NULL, NULL)";
+                                tempSql = "INSERT INTO `load_trans`( `VEHICLE_ID`, `DRIVER`, `WEIGHT`, `STATE`, `REAL_PANEL`, `CA`, `MG`, `NA`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ( '" + val[Carid] + "', '" + vehicleDriver + "', '" + float.Parse(val[Weight]) + "', '正常', '未分配', '0', '0', '0', '" + Company + "', '" + val[Time] + "', NULL, NULL, NULL, NULL)";
                                 if (mysql.UpdOrInsOrdel(tempSql) == 0)
                                 {
                                     using (StreamWriter file = new StreamWriter("LoadError.txt", true))
@@ -185,13 +201,8 @@ namespace LocalData.Data
                                     continue;
                                 }
                                 //存入临时表
-                                tempSql = "INSERT INTO `temp_load_trans`( `VEHICLE_ID`, `DRIVER`, `WEIGHT`, `STATE`, `REAL_PANEL`, `CA`, `MG`, `NA`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ( '" + val[Carid] + "', '" + tempDriver["VEHICLE_DRIVER"] + "', '" + float.Parse(val[Weight]) + "', '正常', '未分配', '0', '0', '0', '" + Company + "', '" + val[Time] + "', NULL, NULL, NULL, NULL)";
+                                tempSql = "INSERT INTO `temp_load_trans`( `VEHICLE_ID`, `DRIVER`, `WEIGHT`, `STATE`, `REAL_PANEL`, `CA`, `MG`, `NA`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ( '" + val[Carid] + "', '" + vehicleDriver + "', '" + float.Parse(val[Weight]) + "', '正常', '未分配', '0', '0', '0', '" + Company + "', '" + val[Time] + "', NULL, NULL, NULL, NULL)";
                                 mysql.UpdOrInsOrdel(tempSql);
-                            }
-                            else
-                            {
-                                //系统外车辆过磅，禁止计入
-                                tempSql = "INSERT INTO `rec_unu_info`( `VEHICLE_ID`, `VEHICLE_TYPE`, `WARNTYPE`, `INFO`, `DRIVER`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ('" + val[Carid] + "', '未知', '无效过磅', '系统外车辆过磅，禁止计入', '未知', '" + Company + "', '" + val[Time] + "', NULL, NULL, NULL, NULL)";
                             }
                             continue;
                         }
@@ -279,7 +290,7 @@ namespace LocalData.Data
         private void GetInfo(object source, System.Timers.ElapsedEventArgs e)
         {
             string sql = "select VEHICLE_ID,VEHICLE_DRIVER,VEHICLE_TYPE,PANEL,CA,MG,NA from" +
-                "(SELECT ID,VEHICLE_ID,VEHICLE_TYPE,VEHICLE_DRIVER from list_vehicle where COMPANY='" + Company + "' and VEHICLE_TYPE='挖掘机'or VEHICLE_TYPE='运输车' )a " +
+                "(SELECT ID,VEHICLE_ID,VEHICLE_TYPE,VEHICLE_DRIVER from list_vehicle where COMPANY='" + Company + "')a " +
                 "inner join" +
                 "(" +
                 "select VID,PANEL,CA,MG,NA from(select PID,VID from pre_dispatch where COMPANY='" + Company + "')b " +
