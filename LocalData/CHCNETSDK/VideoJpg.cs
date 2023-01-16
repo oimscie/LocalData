@@ -55,21 +55,34 @@ namespace LocalData.CHCNETSDK
         {
             if (!IsUpdate)
             {
-                IsUpdate = true;
-                string sql = "select NAME,IP,PORT,USERNAME,PASSWORD,BRAND from list_monitor where COMPANY='" + Company + "'";
-                dic = mysql.MultipleSelect(sql, new List<string>() { "NAME", "IP", "PORT", "USERNAME", "PASSWORD", "BRAND" });
-                foreach (var item in dic)
+                try
                 {
-                    LocalPlay Local = new LocalPlay(item["IP"], item["PORT"], item["USERNAME"], item["PASSWORD"]);
-                    if (FileUtils.DirExit(@"D:/localData/", true))
+                    IsUpdate = true;
+                    string sql = "select NAME,IP,PORT,USERNAME,PASSWORD,BRAND from list_monitor where COMPANY='" + Company + "'";
+                    dic = mysql.MultipleSelect(sql, new List<string>() { "NAME", "IP", "PORT", "USERNAME", "PASSWORD", "BRAND" });
+                    if (dic != null)
                     {
-                        if (Local.GetJpg(@"D:/localData/" + item["NAME"] + ".jpg"))
+                        foreach (var item in dic)
                         {
-                            SendFile(@"D:/localData/" + item["NAME"] + ".jpg");
+                            LocalPlay Local = new LocalPlay(item["IP"], item["PORT"], item["USERNAME"], item["PASSWORD"]);
+                            if (FileUtils.DirExit(@"D:/localData/", true))
+                            {
+                                if (Local.GetJpg(@"D:/localData/" + item["NAME"] + ".jpg"))
+                                {
+                                    SendFile(@"D:/localData/" + item["NAME"] + ".jpg");
+                                }
+                            }
                         }
                     }
                 }
-                IsUpdate = false;
+                catch (Exception ex)
+                {
+                    LogHelper.WriteLog("监控获取错误", ex);
+                }
+                finally
+                {
+                    IsUpdate = false;
+                }
             }
         }
 

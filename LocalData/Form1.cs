@@ -179,7 +179,6 @@ namespace LocalData
             };
             InserDb.Start();
             new VideoJpg();
-            new CountMonths(DateTime.Now.ToString("yyyy-MM-dd"));
             new CountWeight(DateTime.Now.ToString("yyyy-MM-dd"));
             new CountFuel(DateTime.Now.ToString("yyyy-MM-dd"));
             new CountMileage(DateTime.Now.ToString("yyyy-MM-dd"));
@@ -237,7 +236,10 @@ namespace LocalData
         {
             string sql = "select VEHICLE_ID ,DRIVER,WEIGHT,STATE,REAL_PANEL,ADD_TIME from temp_load_trans where company='" + Company + "' and to_days(ADD_TIME)=to_days(now()) order by ADD_TIME desc limit 0,20";
             List<RecTrans> data = MySqlHelper.MultipleSelect(sql);
-            FormUtil.UpdataSource(dataGridView1, data);
+            if (data != null)
+            {
+                FormUtil.UpdataSource(dataGridView1, data);
+            }
         }
 
         private void notifyIcon1_DoubleClick(object sender, EventArgs e)

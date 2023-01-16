@@ -289,80 +289,90 @@ namespace LocalData.Data
         /// <param name="e"></param>
         private void GetInfo(object source, System.Timers.ElapsedEventArgs e)
         {
-            string sql = "select VEHICLE_ID,VEHICLE_DRIVER,VEHICLE_TYPE,PANEL,CA,MG,NA from" +
-                "(SELECT ID,VEHICLE_ID,VEHICLE_TYPE,VEHICLE_DRIVER from list_vehicle where COMPANY='" + Company + "')a " +
-                "inner join" +
-                "(" +
-                "select VID,PANEL,CA,MG,NA from(select PID,VID from pre_dispatch where COMPANY='" + Company + "')b " +
-                "inner join " +
-                "(select ID,PANEL,CA,MG,NA from pre_panel where COMPANY='" + Company + "')c " +
-                "on b.PID=c.ID" +
-                ")d " +
-                "on a.ID=d.VID";
-            while (isRead)
+            try
             {
-                Thread.Sleep(2);
-            }
-            isRead = true;
-            List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, VehicleInfoFieldName);
-            isRead = false;
-            if (result != null)
-            {
-                foreach (var item in result)
+                string sql = "select VEHICLE_ID,VEHICLE_DRIVER,VEHICLE_TYPE,PANEL,CA,MG,NA from" +
+        "(SELECT ID,VEHICLE_ID,VEHICLE_TYPE,VEHICLE_DRIVER from list_vehicle where COMPANY='" + Company + "')a " +
+        "inner join" +
+        "(" +
+        "select VID,PANEL,CA,MG,NA from(select PID,VID from pre_dispatch where COMPANY='" + Company + "')b " +
+        "inner join " +
+        "(select ID,PANEL,CA,MG,NA from pre_panel where COMPANY='" + Company + "')c " +
+        "on b.PID=c.ID" +
+        ")d " +
+        "on a.ID=d.VID";
+                while (isRead)
                 {
-                    item.TryGetValue("VEHICLE_ID", out string vid);
-                    item.TryGetValue("VEHICLE_DRIVER", out string driver);
-                    item.TryGetValue("VEHICLE_TYPE", out string type);
-                    item.TryGetValue("PANEL", out string panel);
-                    item.TryGetValue("CA", out string ca);
-                    item.TryGetValue("MG", out string mg);
-                    item.TryGetValue("NA", out string na);
-                    if (type == "运输车")
+                    Thread.Sleep(2);
+                }
+                isRead = true;
+                List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, VehicleInfoFieldName);
+                if (result != null)
+                {
+                    foreach (var item in result)
                     {
-                        if (TransInfo.ContainsKey(vid))
+                        item.TryGetValue("VEHICLE_ID", out string vid);
+                        item.TryGetValue("VEHICLE_DRIVER", out string driver);
+                        item.TryGetValue("VEHICLE_TYPE", out string type);
+                        item.TryGetValue("PANEL", out string panel);
+                        item.TryGetValue("CA", out string ca);
+                        item.TryGetValue("MG", out string mg);
+                        item.TryGetValue("NA", out string na);
+                        if (type == "运输车")
                         {
-                            TransInfo[vid] = new ValueTuple<string, string, string, string, string>(panel, driver, ca, mg, na);
+                            if (TransInfo.ContainsKey(vid))
+                            {
+                                TransInfo[vid] = new ValueTuple<string, string, string, string, string>(panel, driver, ca, mg, na);
+                            }
+                            else
+                            {
+                                TransInfo.Add(vid, new ValueTuple<string, string, string, string, string>(panel, driver, ca, mg, na));
+                            }
                         }
                         else
                         {
-                            TransInfo.Add(vid, new ValueTuple<string, string, string, string, string>(panel, driver, ca, mg, na));
+                            if (spadeInfo.ContainsKey(vid))
+                            {
+                                spadeInfo[vid] = new ValueTuple<string, string>(panel, driver);
+                            }
+                            else
+                            {
+                                spadeInfo.Add(vid, new ValueTuple<string, string>(panel, driver));
+                            }
+                            if (panelSpadeInfo.ContainsKey(panel))
+                            {
+                                panelSpadeInfo[panel] = new ValueTuple<string, string>(driver, vid);
+                            }
+                            else
+                            {
+                                panelSpadeInfo.Add(panel, new ValueTuple<string, string>(driver, vid));
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (spadeInfo.ContainsKey(vid))
+                        if (panelInfo.ContainsKey(panel))
                         {
-                            spadeInfo[vid] = new ValueTuple<string, string>(panel, driver);
+                            panelInfo[panel] = new ValueTuple<string, string, string>(ca, mg, na);
                         }
                         else
                         {
-                            spadeInfo.Add(vid, new ValueTuple<string, string>(panel, driver));
+                            panelInfo.Add(panel, new ValueTuple<string, string, string>(ca, mg, na));
                         }
-                        if (panelSpadeInfo.ContainsKey(panel))
-                        {
-                            panelSpadeInfo[panel] = new ValueTuple<string, string>(driver, vid);
-                        }
-                        else
-                        {
-                            panelSpadeInfo.Add(panel, new ValueTuple<string, string>(driver, vid));
-                        }
-                    }
-                    if (panelInfo.ContainsKey(panel))
-                    {
-                        panelInfo[panel] = new ValueTuple<string, string, string>(ca, mg, na);
-                    }
-                    else
-                    {
-                        panelInfo.Add(panel, new ValueTuple<string, string, string>(ca, mg, na));
                     }
                 }
+                else
+                {
+                    TransInfo.Clear();
+                    spadeInfo.Clear();
+                    panelInfo.Clear();
+                    panelSpadeInfo.Clear();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                TransInfo.Clear();
-                spadeInfo.Clear();
-                panelInfo.Clear();
-                panelSpadeInfo.Clear();
+                LogHelper.WriteLog("信息获取错误----" + ex);
+            }
+            finally
+            {
+                isRead = false;
             }
         }
 

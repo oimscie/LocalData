@@ -15,14 +15,17 @@ namespace LocalData.MySql
         /// 数据库连接头
         /// </summary>
         private readonly MySqlConnection Conn;
+
         /// <summary>
         /// 数据库连接句柄
         /// </summary>
         private readonly MySqlCommand Command;
+
         /// <summary>
         /// 连接字符串
         /// </summary>
         private readonly string ConnStr = "Server=" + ConfigurationManager.AppSettings["ServerIp"] + ";Database=product;uid=" + DESUtil.DesDecrypt(ConfigurationManager.AppSettings["ServerUser"], "qwertyuiop") + ";password=" + DESUtil.DesDecrypt(ConfigurationManager.AppSettings["ServerPassWord"], "qwertyuiop") + ";SslMode=none;charset=utf8";
+
         public MySqlHelper()
         {
             Conn = new MySqlConnection(ConnStr);
@@ -31,6 +34,7 @@ namespace LocalData.MySql
                 Connection = Conn
             };
         }
+
         /// <summary>
         /// 关闭连接
         /// </summary>
@@ -45,6 +49,7 @@ namespace LocalData.MySql
                 LogHelper.WriteLog("mysql关闭错误", e);
             }
         }
+
         /// <summary>
         /// 打开连接
         /// </summary>
@@ -66,6 +71,7 @@ namespace LocalData.MySql
                 return false;
             }
         }
+
         public bool CheckConn()
         {
             if (Conn.State == ConnectionState.Closed)
@@ -78,7 +84,7 @@ namespace LocalData.MySql
                 return Open();
             }
             if (Conn.State == ConnectionState.Connecting)
-            { 
+            {
                 return false;
             }
 
@@ -88,6 +94,7 @@ namespace LocalData.MySql
             }
             return true;
         }
+
         /// <summary>
         /// select（多条返回）
         /// </summary>
@@ -100,7 +107,7 @@ namespace LocalData.MySql
             try
             {
                 Command.CommandText = sql;
-                MySqlDataReader  Reader = Command.ExecuteReader();
+                MySqlDataReader Reader = Command.ExecuteReader();
                 List<Dictionary<string, string>> back = new List<Dictionary<string, string>>();
                 int index = 0;
                 while (Reader.Read())
@@ -157,7 +164,6 @@ namespace LocalData.MySql
                         REAL_PANEL = Reader.GetString("REAL_PANEL"),
                         ADD_TIME = Reader.GetString("ADD_TIME"),
                     }); ;
-
                 }
                 Reader.Close();
                 if (back.Count == 0) { return null; };
@@ -173,6 +179,7 @@ namespace LocalData.MySql
                 Close();
             }
         }
+
         /// <summary>
         ///  select（多条返回）
         /// </summary>
@@ -330,8 +337,8 @@ namespace LocalData.MySql
             {
                 Close();
             }
-
         }
+
         /// <summary>
         /// 查找目标是否存在，必须是select count（ID） as Count.....
         /// </summary>
@@ -361,7 +368,6 @@ namespace LocalData.MySql
             {
                 Close();
             }
-
         }
     }
 }

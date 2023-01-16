@@ -14,12 +14,13 @@ namespace LocalData.Data
         private readonly MySqlHelper mysql;
         private readonly string Company;
         private readonly string date;
+
         public CountMonths(string dates)
         {
             Company = ConfigurationManager.AppSettings["Company"];
             mysql = new MySqlHelper();
             date = DateTime.Parse(dates).AddDays(-1).ToShortDateString();
-            Count(null,null);
+            Count(null, null);
             date = dates;
             Thread thread = new Thread(CountTimer)
             {
@@ -27,6 +28,7 @@ namespace LocalData.Data
             };
             thread.Start();
         }
+
         #region//车辆统计
 
         private void Count(object source, System.Timers.ElapsedEventArgs e)
@@ -34,6 +36,7 @@ namespace LocalData.Data
             CountMonth(date);
             CountDrive(date);
         }
+
         private void CountTimer()
         {
             System.Timers.Timer Timer1 = new System.Timers.Timer(1000 * 60 * 15);
@@ -53,11 +56,10 @@ namespace LocalData.Data
             List<Dictionary<string, string>> list = mysql.MultipleSelect(sql, new List<string>() { "id", "type", "weight", "unu_weight", "fule", "inject", "mileage", "num", "factor", "unfuel", "unspeed", "untrans" });
             try
             {
-               
                 if (list != null)
                 {
                     foreach (var item in list)
-                    {                     
+                    {
                         sql = "select COUNT(ID) as Count from count_sys_month where company='" + Company + "' and VEHICLE_ID='" + item["id"] + "' and DATE_FORMAT(ADD_TIME,'%Y-%m')=DATE_FORMAT('" + date + "','%Y-%m')";
                         if (mysql.GetCount(sql) != 0)
                         {
@@ -66,7 +68,9 @@ namespace LocalData.Data
                         }
                         else
                         {
-                            sql = "INSERT INTO `count_sys_month`( `VEHICLE_ID`, `TYPE`, `WEIGHT`, `UNUSUAL_WEIGHT`, `USE_FUEL`, `INJECT_FUEL`, `MILEAGE`, `LOAD_NUM`, `LOAD_FACTOR`, `UNFUEL`, `UNSPEED`, `UNTRANS`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ( '" + item["id"] + "', '" + item["type"] + "', '" + item["weight"] + "', '" + item["unu_weight"] + "', '" + item["fule"] + "', '" + item["inject"] + "', '" + item["mileage"] + "', '" + item["num"] + "', '" + item["factor"] + "', '" + item["unfuel"] + "', '" + item["unspeed"] + "', '" + item["untrans"] + "', '" + Company + "', '" + date + "', NULL, NULL, NULL, NULL)";
+                            string[] dateStr = date.Split('-');
+                            string tempdate = dateStr[0] + '-' + dateStr[1] + "-1";
+                            sql = "INSERT INTO `count_sys_month`( `VEHICLE_ID`, `TYPE`, `WEIGHT`, `UNUSUAL_WEIGHT`, `USE_FUEL`, `INJECT_FUEL`, `MILEAGE`, `LOAD_NUM`, `LOAD_FACTOR`, `UNFUEL`, `UNSPEED`, `UNTRANS`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ( '" + item["id"] + "', '" + item["type"] + "', '" + item["weight"] + "', '" + item["unu_weight"] + "', '" + item["fule"] + "', '" + item["inject"] + "', '" + item["mileage"] + "', '" + item["num"] + "', '" + item["factor"] + "', '" + item["unfuel"] + "', '" + item["unspeed"] + "', '" + item["untrans"] + "', '" + Company + "', '" + tempdate + "', NULL, NULL, NULL, NULL)";
                             mysql.UpdOrInsOrdel(sql);
                         }
                     }
@@ -77,9 +81,11 @@ namespace LocalData.Data
                 LogHelper.WriteLog("月计算错误-----" + ex);
             }
         }
+
         #endregion
 
         #region//司机统计
+
         public void CountDrive(string date)
         {
             //获取司机
@@ -110,6 +116,7 @@ namespace LocalData.Data
                 LogHelper.WriteLog("月计算错误-----" + ex);
             }
         }
+
         #endregion
     }
 }

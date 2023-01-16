@@ -59,6 +59,7 @@ namespace LocalData.Data
         public void CountTransHourAndDayByVehicle(string date)
         {
             //获取运输车辆
+
             string sql = "SELECT DISTINCT VEHICLE_ID FROM temp_load_trans where COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "'";
             List<string> list = mysql.MultipleSelect(sql, "VEHICLE_ID", "");
 
@@ -72,7 +73,8 @@ namespace LocalData.Data
                         float TotalWeight = 0;//当前车全天运输总量
                         int TotalNum = 0;//当前车全天运输总车次
                         float TotalFactor = 0;//当前车全天运输总满载率
-                        sql = "select loads,weight,num,hours from (select  VEHICLE_ID,SUM(WEIGHT) as weight ,COUNT(ID) as num ,HOUR(ADD_TIME) as hours from temp_load_trans where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours)a inner join (select VEHICLE_ID,VEHICLE_LOAD as loads from list_vehicle where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' )b on a.VEHICLE_ID=b.VEHICLE_ID";
+
+                        sql = "select ifnull(loads,50) as loads,weight,num,hours from (select  VEHICLE_ID,SUM(WEIGHT) as weight ,COUNT(ID) as num ,HOUR(ADD_TIME) as hours from temp_load_trans where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours)a left join (select VEHICLE_ID,VEHICLE_LOAD as loads from list_vehicle where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' )b on a.VEHICLE_ID=b.VEHICLE_ID";
                         List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, new List<string>() { "loads", "weight", "num", "hours" });
                         if (result != null)
                         {
