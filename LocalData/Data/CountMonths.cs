@@ -105,7 +105,9 @@ namespace LocalData.Data
                         }
                         else
                         {
-                            sql = "INSERT INTO `count_driver_month`( `DRIVER`, `TYPE`, `WEIGHT`, `UNUSUAL_WEIGHT`,`LOAD_NUM`, `AVGWEIGHT`, `UNFUEL`, `UNSPEED`, `UNTRANS`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ( '" + item["driver"] + "', '" + item["type"] + "', '" + item["weight"] + "', '" + item["unu_weight"] + "', '" + item["num"] + "', '" + item["avgweight"] + "', '" + item["unfuel"] + "', '" + item["unspeed"] + "', '" + item["untrans"] + "', '" + Company + "', '" + date + "', NULL, NULL, NULL, NULL)";
+                            string[] dateStr = date.Split('-');
+                            string tempdate = dateStr[0] + '-' + dateStr[1] + "-1";
+                            sql = "INSERT INTO `count_driver_month`( `DRIVER`, `TYPE`, `WEIGHT`, `UNUSUAL_WEIGHT`,`LOAD_NUM`, `AVGWEIGHT`, `UNFUEL`, `UNSPEED`, `UNTRANS`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ( '" + item["driver"] + "', '" + item["type"] + "', '" + item["weight"] + "', '" + item["unu_weight"] + "', '" + item["num"] + "', '" + item["avgweight"] + "', '" + item["unfuel"] + "', '" + item["unspeed"] + "', '" + item["untrans"] + "', '" + Company + "', '" + tempdate + "', NULL, NULL, NULL, NULL)";
                             mysql.UpdOrInsOrdel(sql);
                         }
                     }
