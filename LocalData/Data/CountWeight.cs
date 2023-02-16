@@ -20,6 +20,11 @@ namespace LocalData.Data
         private readonly string Company;
         private readonly string date;
 
+        /// <summary>
+        /// 统计过程标记
+        /// </summary>
+        private int TotalCount = 0;
+
         public CountWeight(string dates)
         {
             Company = ConfigurationManager.AppSettings["Company"];
@@ -40,6 +45,7 @@ namespace LocalData.Data
             CountTransHourAndDayByDriver(date);
             CountSpade(date);
             CountSpadeHourAndDayByDriver(date);
+            TotalCount = 0;
         }
 
         private void CountTimer()
@@ -59,9 +65,9 @@ namespace LocalData.Data
         public void CountTransHourAndDayByVehicle(string date)
         {
             //获取运输车辆
-
+            FormUtil.ModifyLable(DataForm.MainForm.Loadometer, "统计-" + (TotalCount + 1), Color.Green);
             string sql = "SELECT DISTINCT VEHICLE_ID FROM temp_load_trans where COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "'";
-            List<string> list = mysql.MultipleSelect(sql, "VEHICLE_ID", "");
+            List<string> list = mysql.multiple_select_list_string(sql, "VEHICLE_ID");
 
             try
             {
@@ -72,10 +78,9 @@ namespace LocalData.Data
                     {
                         float TotalWeight = 0;//当前车全天运输总量
                         int TotalNum = 0;//当前车全天运输总车次
-                        float TotalFactor = 0;//当前车全天运输总满载率
-
+                        int load = 0;//当前车辆核定载重
                         sql = "select ifnull(loads,50) as loads,weight,num,hours from (select  VEHICLE_ID,SUM(WEIGHT) as weight ,COUNT(ID) as num ,HOUR(ADD_TIME) as hours from temp_load_trans where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours)a left join (select VEHICLE_ID,VEHICLE_LOAD as loads from list_vehicle where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' )b on a.VEHICLE_ID=b.VEHICLE_ID";
-                        List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, new List<string>() { "loads", "weight", "num", "hours" });
+                        List<Dictionary<string, string>> result = mysql.multiple_select_list_dic(sql, new List<string>() { "loads", "weight", "num", "hours" });
                         if (result != null)
                         {
                             //当前车各小时过磅数据（运输量、运输次数、满载率）
@@ -86,9 +91,8 @@ namespace LocalData.Data
                                 TotalWeight += float.Parse(weight);
                                 string num = dic["num"];
                                 TotalNum += int.Parse(num);
-                                string loads = dic["loads"];
-                                string factor = int.Parse(loads) * int.Parse(num) == 0 ? "0" : (float.Parse(weight) / int.Parse(loads) * int.Parse(num)).ToString();
-                                TotalFactor += float.Parse(factor);
+                                load = int.Parse(dic["loads"]);
+                                string factor = load * float.Parse(num) == 0 ? "0" : (float.Parse(weight) / load / float.Parse(num)).ToString();
                                 string FormatDate = date + "-" + hours;
                                 sql = "select COUNT(ID) as Count from count_sys_hour where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' and date_format(ADD_TIME,'%Y-%m-%d-%h')=date_format('" + FormatDate + "','%Y-%m-%d-%h')";
                                 if (mysql.GetCount(sql) != 0)
@@ -104,7 +108,7 @@ namespace LocalData.Data
                                 }
                             }
                             //计算当前日期当前车辆总运输数据
-                            string factors = TotalNum == 0 ? "0" : (TotalFactor / TotalNum).ToString();
+                            string factors = load * TotalNum == 0 ? "0" : (TotalWeight / TotalNum / load).ToString();
                             sql = "select COUNT(ID) as Count from count_sys_day where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "'";
                             if (mysql.GetCount(sql) != 0)
                             {
@@ -124,7 +128,7 @@ namespace LocalData.Data
                         float TotalWeight = 0;//当前车辆当前日期运输异常总量
                         float TotalCount = 0;//当前车辆当前日期运输运输报警总次数
                         sql = "select  Count(ID) as Count,SUM(WEIGHT)as weight,HOUR(ADD_TIME) as hours from rec_unu_tran where REC_STATE='YES' and VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours";
-                        List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, new List<string>() { "Count", "weight", "hours" });
+                        List<Dictionary<string, string>> result = mysql.multiple_select_list_dic(sql, new List<string>() { "Count", "weight", "hours" });
                         if (result != null)
                         {
                             //当前车各小时运输报警数据
@@ -159,9 +163,10 @@ namespace LocalData.Data
 
         public void CountTransHourAndDayByDriver(string date)
         {
+            FormUtil.ModifyLable(DataForm.MainForm.Loadometer, "统计-" + (TotalCount + 1), Color.Green);
             //获取运输司机
             string sql = "SELECT DISTINCT DRIVER FROM temp_load_trans where COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "'";
-            List<string> list = mysql.MultipleSelect(sql, "DRIVER", "");
+            List<string> list = mysql.multiple_select_list_string(sql, "DRIVER");
             try
             {
                 if (list != null)
@@ -172,7 +177,7 @@ namespace LocalData.Data
                         float TotalWeight = 0;//当前司机全天运输总量
                         int TotalNum = 0;//当前司机全天运输总车次
                         sql = "select SUM(WEIGHT) as weight ,COUNT(ID) as num ,HOUR(ADD_TIME) as hours from temp_load_trans where DRIVER='" + driver + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours";
-                        List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, new List<string>() { "weight", "num", "hours" });
+                        List<Dictionary<string, string>> result = mysql.multiple_select_list_dic(sql, new List<string>() { "weight", "num", "hours" });
                         if (result != null)
                         {
                             //当前司机各小时过磅数据（运输量、运输次数、吨/车）
@@ -199,6 +204,7 @@ namespace LocalData.Data
                                     mysql.UpdOrInsOrdel(sql);
                                 }
                             }
+
                             //计算当前日期当前司机总过磅数
                             string AvgWeight = TotalNum == 0 ? "0" : (TotalWeight / TotalNum).ToString();
                             sql = "select COUNT(ID) as Count from count_driver_day where DRIVER='" + driver + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "'";
@@ -209,7 +215,7 @@ namespace LocalData.Data
                             }
                             else
                             {
-                                sql = "INSERT INTO `count_driver_day`( `DRIVER`, `WEIGHT`, `TYPE`, `UNUSUAL_WEIGHT`, `LOAD_NUM`, `AVGWEIGHT`, `UNFUEL`, `UNSPEED`, `UNTRANS`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ('" + driver + "', '" + TotalWeight + "', '运输车', 0, '" + TotalNum + "', '" + AvgWeight + "', 0, 0, 0, '" + Company + "', '" + date + "', NULL, NULL, NULL, NULL)";
+                                sql = "INSERT INTO `count_driver_day`( `DRIVER`, `WEIGHT`, `TYPE`, `UNUSUAL_WEIGHT`, `LOAD_NUM`, `AVGWEIGHT`, `WORKTIME`,`UNFUEL`, `UNSPEED`, `UNTRANS`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ('" + driver + "', '" + TotalWeight + "', '运输车', 0, '" + TotalNum + "', '" + AvgWeight + "',0, 0, 0, 0, '" + Company + "', '" + date + "', NULL, NULL, NULL, NULL)";
                                 mysql.UpdOrInsOrdel(sql);
                             }
                         }
@@ -221,7 +227,7 @@ namespace LocalData.Data
                         float TotalWeight = 0;//当前司机当前日期运输异常总量
                         float TotalCount = 0;//当前司机当前日期运输运输报警总次数
                         sql = "select  Count(ID) as Count,SUM(WEIGHT)as weight,HOUR(ADD_TIME) as hours from rec_unu_tran where REC_STATE='YES' and DRIVER='" + driver + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours";
-                        List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, new List<string>() { "Count", "weight", "hours" });
+                        List<Dictionary<string, string>> result = mysql.multiple_select_list_dic(sql, new List<string>() { "Count", "weight", "hours" });
                         if (result != null)
                         {
                             //当前司机各小时报警数据
@@ -259,7 +265,7 @@ namespace LocalData.Data
         {
             //获取铲装车辆
             string sql = "SELECT DISTINCT VEHICLE_ID FROM temp_load_spade where COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "'";
-            List<string> list = mysql.MultipleSelect(sql, "VEHICLE_ID", "");
+            List<string> list = mysql.multiple_select_list_string(sql, "VEHICLE_ID");
             try
             {
                 if (list != null)
@@ -270,7 +276,7 @@ namespace LocalData.Data
                         float TotalWeight = 0;//当前车全天铲装总量
                         int TotalNum = 0;//当前车全天铲装总车次
                         sql = "select SUM(WEIGHT) as weight ,COUNT(ID) as num ,HOUR(ADD_TIME) as hours from temp_load_spade where VEHICLE_ID='" + vid + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours";
-                        List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, new List<string>() { "weight", "num", "hours" });
+                        List<Dictionary<string, string>> result = mysql.multiple_select_list_dic(sql, new List<string>() { "weight", "num", "hours" });
                         if (result != null)
                         {
                             //当前车各小时铲装数据（铲装量、铲装次数）
@@ -325,11 +331,12 @@ namespace LocalData.Data
 
         public void CountSpadeHourAndDayByDriver(string date)
         {
+            FormUtil.ModifyLable(DataForm.MainForm.Loadometer, "统计-" + (TotalCount + 1), Color.Green);
             //获取铲装司机
             string sql = "SELECT DISTINCT DRIVER FROM temp_load_spade where COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "'";
             try
             {
-                List<string> list = mysql.MultipleSelect(sql, "DRIVER", "");
+                List<string> list = mysql.multiple_select_list_string(sql, "DRIVER");
                 if (list != null)
                 {
                     //遍历各司机铲装情况，同遍历各车情况相同
@@ -338,7 +345,7 @@ namespace LocalData.Data
                         float TotalWeight = 0;//当前司机全天铲装总量
                         int TotalNum = 0;//当前司机全天铲装总车次
                         sql = "select SUM(WEIGHT) as weight ,COUNT(ID) as num ,HOUR(ADD_TIME) as hours from temp_load_trans where DRIVER='" + driver + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "' GROUP BY hours";
-                        List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, new List<string>() { "weight", "num", "hours" });
+                        List<Dictionary<string, string>> result = mysql.multiple_select_list_dic(sql, new List<string>() { "weight", "num", "hours" });
                         if (result != null)
                         {
                             //当前司机各小时铲装数据（铲装量、运输次数）
@@ -367,7 +374,7 @@ namespace LocalData.Data
                             }
                             //计算当前日期当前司机总铲装
                             string AvgWeight = TotalNum == 0 ? "0" : (TotalWeight / TotalNum).ToString();
-                            sql = "select COUNT(ID) as Count from count_driver_day where DRIVER='" + driver + "' and COMPANY='" + Company + "' and DATE(ADD_TIME)='" + date + "'";
+                            sql = "select COUNT(ID) as Count from count_driver_day where DRIVER='" + driver + "' and COMPANY='" + Company + "' and ADD_TIME='" + date + "'";
                             if (mysql.GetCount(sql) != 0)
                             {
                                 sql = "update count_driver_day set WEIGHT='" + TotalWeight + "',LOAD_NUM='" + TotalNum + "',AVGWEIGHT='" + AvgWeight + "' where DRIVER='" + driver + "' and COMPANY='" + Company + "' and ADD_TIME='" + date + "'";
@@ -375,7 +382,7 @@ namespace LocalData.Data
                             }
                             else
                             {
-                                sql = "INSERT INTO `count_driver_day`( `DRIVER`, `WEIGHT`, `TYPE`, `UNUSUAL_WEIGHT`, `LOAD_NUM`, `AVGWEIGHT`, `UNFUEL`, `UNSPEED`, `UNTRANS`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ('" + driver + "', '" + TotalWeight + "', '挖掘机', 0, '" + TotalNum + "', '" + AvgWeight + "', 0, 0, 0, '" + Company + "', '" + date + "', NULL, NULL, NULL, NULL)";
+                                sql = "INSERT INTO `count_driver_day`( `DRIVER`, `WEIGHT`, `TYPE`, `UNUSUAL_WEIGHT`, `LOAD_NUM`, `AVGWEIGHT`, `WORKTIME`,`UNFUEL`, `UNSPEED`, `UNTRANS`, `COMPANY`, `ADD_TIME`, `TEMP1`, `TEMP2`, `TEMP3`, `TEMP4`) VALUES ('" + driver + "', '" + TotalWeight + "', '挖掘机', 0, '" + TotalNum + "', '" + AvgWeight + "',0, 0, 0, 0, '" + Company + "', '" + date + "', NULL, NULL, NULL, NULL)";
                                 mysql.UpdOrInsOrdel(sql);
                             }
                         }

@@ -97,7 +97,7 @@ namespace LocalData
             if (e.Msg == WM_COPYDATA)
             {
                 CopyDataStruct cds = (CopyDataStruct)e.GetLParam(typeof(CopyDataStruct));
-                if (cds.lpData.ToString() == "运行中")
+                if (cds.lpData.ToString() == "已连接")
                 {
                     FormUtil.ModifyLable(tsslServerState, cds.lpData.ToString(), Color.Green);
                 }
@@ -182,6 +182,7 @@ namespace LocalData
             new CountWeight(DateTime.Now.ToString("yyyy-MM-dd"));
             new CountFuel(DateTime.Now.ToString("yyyy-MM-dd"));
             new CountMileage(DateTime.Now.ToString("yyyy-MM-dd"));
+            new CountWorkTime(DateTime.Now.ToString("yyyy-MM-dd"));
             new CountMonths(DateTime.Now.ToString("yyyy-MM-dd"));
             new CountGama();
             new FuelFit();
@@ -192,7 +193,7 @@ namespace LocalData
         {
             if (e.CloseReason == CloseReason.UserClosing)
             {
-                DialogResult result = MessageBox.Show("是否进入托盘运行?", "操作提示", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Asterisk);
+                DialogResult result = MessageBox.Show("警告，此程序不建议关闭！进入托盘运行?", "操作提示", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Asterisk);
                 if (result == DialogResult.Yes)
                 {
                     e.Cancel = true;

@@ -15,6 +15,12 @@ namespace LocalData.Data
         private readonly MySqlHelper mysql;
         private readonly string Company;
         private bool isRead = false;
+
+        /// <summary>
+        /// 统计过程标记
+        /// </summary>
+        private int TotalCount = 0;
+
         public CountGama()
         {
             mysql = new MySqlHelper();
@@ -32,6 +38,7 @@ namespace LocalData.Data
             };
             thread2.Start();
         }
+
         /// <summary>
         ///定时更新gama统计
         /// </summary>
@@ -42,16 +49,18 @@ namespace LocalData.Data
             CountMinTimer.AutoReset = true;
             CountMinTimer.Enabled = true;
         }
+
         /// <summary>
         ///定时更新gama统计
         /// </summary>
         private void CountHourGamaTimer()
         {
-            System.Timers.Timer CountHourTimer = new System.Timers.Timer(1000 * 60 * 10);
+            System.Timers.Timer CountHourTimer = new System.Timers.Timer(1000 * 60 * 30);
             CountHourTimer.Elapsed += new ElapsedEventHandler(CountHour);
             CountHourTimer.AutoReset = true;
             CountHourTimer.Enabled = true;
         }
+
         /// <summary>
         /// 指定日期本小时内各分钟gama计算
         /// </summary>
@@ -62,13 +71,14 @@ namespace LocalData.Data
             string date = DateTime.Now.ToShortDateString();
             int hour = DateTime.Now.Hour;
             string sql = "select MINUTE(ADD_TIME) as min,AVG(GAMA_FLUX) as flux ,AVG(GAMA_LOAD) as loads ,AVG(GAMA_SI) as si ,AVG(GAMA_AL) as al ,AVG(GAMA_FE) as fe ,AVG(GAMA_CA) as ca ,AVG(GAMA_MG) as mg ,AVG(GAMA_K) as k ,AVG(GAMA_NA) as na ,AVG(GAMA_S) as s ,AVG(GAMA_CL) as cl  from  gama_orig where company='" + Company + "' and DATE_FORMAT(ADD_TIME,'%Y-%m-%d-%h')=DATE_FORMAT('" + date + "-" + hour + ":00:00" + "','%Y-%m-%d-%h') GROUP BY min";
-            while (isRead) {
+            while (isRead)
+            {
                 Thread.Sleep(2);
             }
             isRead = true;
             try
             {
-                List<Dictionary<string, string>> list = mysql.MultipleSelect(sql, new List<string>() { "min", "flux", "loads", "si", "al", "fe", "ca", "mg", "k", "na", "s", "cl", });
+                List<Dictionary<string, string>> list = mysql.multiple_select_list_dic(sql, new List<string>() { "min", "flux", "loads", "si", "al", "fe", "ca", "mg", "k", "na", "s", "cl", });
                 if (list != null)
                 {
                     foreach (var dic in list)
@@ -95,7 +105,8 @@ namespace LocalData.Data
                 FormUtil.ModifyLable(DataForm.MainForm.Gama, "错误", Color.Red);
                 LogHelper.WriteLog("gama计算错误-----" + ex);
             }
-            finally {
+            finally
+            {
                 isRead = false;
             }
         }
@@ -110,7 +121,7 @@ namespace LocalData.Data
                 Thread.Sleep(2);
             }
             isRead = true;
-            List<Dictionary<string, string>> list = mysql.MultipleSelect(sql, new List<string>() { "hours", "flux", "loads", "si", "al", "fe", "ca", "mg", "k", "na", "s", "cl", });
+            List<Dictionary<string, string>> list = mysql.multiple_select_list_dic(sql, new List<string>() { "hours", "flux", "loads", "si", "al", "fe", "ca", "mg", "k", "na", "s", "cl", });
             try
             {
                 if (list != null)
@@ -139,7 +150,8 @@ namespace LocalData.Data
                 FormUtil.ModifyLable(DataForm.MainForm.Gama, "错误", Color.Red);
                 LogHelper.WriteLog("gama计算错误-----" + ex);
             }
-            finally {
+            finally
+            {
                 isRead = false;
             }
         }

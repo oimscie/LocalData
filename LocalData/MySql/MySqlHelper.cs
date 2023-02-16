@@ -101,7 +101,7 @@ namespace LocalData.MySql
         /// <param name="sql">SQL语句</param>
         /// <param name="fieldName">要查询的数据字段名称集合</param>
         /// <returns>List<Dictionary<string, string>>，以输入的字段名称为key值</returns>
-        public List<Dictionary<string, string>> MultipleSelect(string sql, List<string> fieldName)
+        public List<Dictionary<string, string>> multiple_select_list_dic(string sql, List<string> fieldName)
         {
             if (!CheckConn()) { return null; }
             try
@@ -186,7 +186,7 @@ namespace LocalData.MySql
         /// <param name="sql">SQL语句</param>
         /// <param name="fieldName">要查询的数据字段名称</param>
         /// <returns>ArrayList</returns>
-        public List<string> MultipleSelect(string sql, string fieldName, string none)
+        public List<string> multiple_select_list_string(string sql, string fieldName)
         {
             if (!CheckConn()) { return null; }
             try
@@ -219,7 +219,7 @@ namespace LocalData.MySql
         /// <param name="sql">SQL语句</param>
         /// <param name="fieldName">要查询的数据字段名称</param>
         /// <returns>ArrayList</returns>
-        public List<double> MultipleSelect(string sql, string fieldName)
+        public List<double> multiple_select_list_double(string sql, string fieldName)
         {
             if (!CheckConn()) { return null; }
             try
@@ -247,7 +247,7 @@ namespace LocalData.MySql
         }
 
         /// <summary>
-        /// select（多条返回）
+        /// select（单条返回）
         /// </summary>
         /// <param name="sql">SQL语句</param>
         /// <param name="fieldName">要查询的数据字段名称</param>
@@ -266,6 +266,38 @@ namespace LocalData.MySql
                 }
                 Reader.Close();
                 if (back.Count == 0) { return null; };
+                return back;
+            }
+            catch (Exception e)
+            {
+                LogHelper.WriteLog("sql查询错误------" + sql + "------", e);
+                return null;
+            }
+            finally
+            {
+                Close();
+            }
+        }
+
+        /// <summary>
+        /// select（单条返回）
+        /// </summary>
+        /// <param name="sql">SQL语句</param>
+        /// <param name="fieldName">要查询的数据字段名称</param>
+        /// <returns>Dictionary<string, string>，以输入的字段名称为key值</returns>
+        public string SingleSelectfield(string sql, string fieldName)
+        {
+            if (!CheckConn()) { return null; }
+            try
+            {
+                Command.CommandText = sql;
+                MySqlDataReader Reader = Command.ExecuteReader();
+                string back = null;
+                while (Reader.Read())
+                {
+                    back = Reader.GetString(fieldName);
+                }
+                Reader.Close();
                 return back;
             }
             catch (Exception e)

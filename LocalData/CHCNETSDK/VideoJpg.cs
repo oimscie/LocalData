@@ -59,7 +59,7 @@ namespace LocalData.CHCNETSDK
                 {
                     IsUpdate = true;
                     string sql = "select NAME,IP,PORT,USERNAME,PASSWORD,BRAND from list_monitor where COMPANY='" + Company + "'";
-                    dic = mysql.MultipleSelect(sql, new List<string>() { "NAME", "IP", "PORT", "USERNAME", "PASSWORD", "BRAND" });
+                    dic = mysql.multiple_select_list_dic(sql, new List<string>() { "NAME", "IP", "PORT", "USERNAME", "PASSWORD", "BRAND" });
                     if (dic != null)
                     {
                         foreach (var item in dic)

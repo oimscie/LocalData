@@ -15,18 +15,22 @@ namespace LocalData.MySql
         /// 数据库连接头
         /// </summary>
         private SqlConnection Conn;
+
         /// <summary>
         /// 数据库连接句柄
         /// </summary>
         private SqlCommand Command;
+
         /// <summary>
         /// 读取头
         /// </summary>
         private SqlDataReader Reader;
+
         /// <summary>
         /// 连接字符串
         /// </summary>
         private readonly string ConnStr = "Server=" + ConfigurationManager.AppSettings["LocalIp"] + ";Database=" + ConfigurationManager.AppSettings["Database"] + ";uid=" + ConfigurationManager.AppSettings["UserName"] + ";pwd=" + ConfigurationManager.AppSettings["PassWord"] + "";
+
         public SqlHelper()
         {
             Conn = new SqlConnection(ConnStr);
@@ -35,16 +39,19 @@ namespace LocalData.MySql
                 Connection = Conn
             };
         }
+
         /// <summary>
         /// 关闭连接
         /// </summary>
         public void Close()
         {
-            try {
+            try
+            {
                 Conn.Close();
             }
             catch { }
         }
+
         /// <summary>
         /// 打开连接
         /// </summary>
@@ -61,6 +68,11 @@ namespace LocalData.MySql
                 FormUtil.ModifyLable(DataForm.MainForm.local, "断开", Color.Red);
                 return false;
             }
+            catch (SqlException)
+            {
+                FormUtil.ModifyLable(DataForm.MainForm.local, "无服务", Color.Red);
+                return false;
+            }
             catch (Exception e)
             {
                 FormUtil.ModifyLable(DataForm.MainForm.local, "断开", Color.Red);
@@ -68,6 +80,7 @@ namespace LocalData.MySql
                 return false;
             }
         }
+
         public bool CheckConn()
         {
             if (Conn.State == ConnectionState.Closed)
@@ -85,6 +98,7 @@ namespace LocalData.MySql
             }
             return true;
         }
+
         /// <summary>
         /// select（单条返回）
         /// </summary>
@@ -93,14 +107,13 @@ namespace LocalData.MySql
         /// <returns>List<Dictionary<string, string>>，以输入的字段名称为key值</returns>
         public Dictionary<string, string> SingleSelect(string sql, List<string> fieldName)
         {
-            if (!CheckConn()) { return null;}
+            if (!CheckConn()) { return null; }
             try
             {
-               
                 Command.CommandText = sql;
                 Reader = Command.ExecuteReader();
                 Dictionary<string, string> back = new Dictionary<string, string>();
-                if(Reader.Read())
+                if (Reader.Read())
                 {
                     for (int i = 0; i < Reader.FieldCount; i++)
                     {
@@ -115,7 +128,7 @@ namespace LocalData.MySql
             catch (Exception e)
             {
                 FormUtil.ModifyLable(DataForm.MainForm.local, "错误", Color.Red);
-                LogHelper.WriteLog("本地库查询错误------"+sql+"------", e);
+                LogHelper.WriteLog("本地库查询错误------" + sql + "------", e);
                 return null;
             }
             finally
@@ -123,6 +136,5 @@ namespace LocalData.MySql
                 Conn.Close();
             }
         }
-
     }
 }

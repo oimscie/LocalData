@@ -144,6 +144,7 @@
     <Compile Include="Data\FuelFit.cs" />
     <Compile Include="Data\InsertDB.cs" />
     <Compile Include="Data\LocalWeigh.cs" />
+    <Compile Include="Data\CountWorkTime.cs" />
     <Compile Include="DESUtil.cs" />
     <Compile Include="FileUtils.cs" />
     <Compile Include="Form1.cs">

@@ -306,7 +306,7 @@ namespace LocalData.Data
                     Thread.Sleep(2);
                 }
                 isRead = true;
-                List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, VehicleInfoFieldName);
+                List<Dictionary<string, string>> result = mysql.multiple_select_list_dic(sql, VehicleInfoFieldName);
                 if (result != null)
                 {
                     foreach (var item in result)
@@ -437,7 +437,7 @@ namespace LocalData.Data
                 Thread.Sleep(2);
             }
             isRead = true;
-            List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, VehicleStateFieldName);
+            List<Dictionary<string, string>> result = mysql.multiple_select_list_dic(sql, VehicleStateFieldName);
             isRead = false;
             if (result == null)
             {
@@ -587,7 +587,7 @@ namespace LocalData.Data
                 Thread.Sleep(2);
             }
             isRead = true;
-            List<Dictionary<string, string>> Tresult = mysql.MultipleSelect(sql, new List<string>() { "POSI_X", "POSI_Y", "ADD_TIME" });
+            List<Dictionary<string, string>> Tresult = mysql.multiple_select_list_dic(sql, new List<string>() { "POSI_X", "POSI_Y", "ADD_TIME" });
             isRead = false;
             if (Tresult != null)
             {

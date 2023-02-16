@@ -14,14 +14,17 @@ namespace LocalData.Data
         private readonly MySqlHelper mysql;
         private readonly string Company;
         private bool isRead = false;
+
         /// <summary>
         /// 车辆编号--标定方式-品牌-司机-id
         /// </summary>
         private readonly Dictionary<string, ValueTuple<string, string, string, string>> demarcateInfo;
+
         /// <summary>
         /// 品牌标定参数
         /// </summary>
         private readonly Dictionary<string, ValueTuple<double, double, double, double, double>> paramDic;
+
         public FuelFit()
         {
             Company = ConfigurationManager.AppSettings["Company"];
@@ -40,6 +43,7 @@ namespace LocalData.Data
             };
             thread2.Start();
         }
+
         /// <summary>
         /// 标定油量
         /// </summary>
@@ -56,13 +60,13 @@ namespace LocalData.Data
                 string sql = "select distinct VEHICLE_ID as vid from fuel_orig where company='" + Company + "' and  REC_STATE='NO' and ADD_TIME > DATE_SUB(NOW(),INTERVAL  2 HOUR)";
                 try
                 {
-                    List<string> list = mysql.MultipleSelect(sql, "vid", "");
+                    List<string> list = mysql.multiple_select_list_string(sql, "vid");
                     if (list != null)
                     {
                         foreach (var vid in list)
                         {
                             sql = "select ID as id,VEHICLE_ID as vid,ORIG_FUEL as oriFuel,ADD_TIME as time from fuel_orig where company='" + Company + "' and VEHICLE_ID='" + vid + "' and   REC_STATE='NO' and ADD_TIME > DATE_SUB(NOW(),INTERVAL  2 HOUR) order by ADD_TIME asc limit 0,10 ";
-                            List<Dictionary<string, string>> result = mysql.MultipleSelect(sql, new List<string>() { "id", "vid", "oriFuel", "time" });
+                            List<Dictionary<string, string>> result = mysql.multiple_select_list_dic(sql, new List<string>() { "id", "vid", "oriFuel", "time" });
                             if (result != null && result.Count == 10)
                             {
                                 List<double> fuel = new List<double>();
@@ -120,7 +124,7 @@ namespace LocalData.Data
                             }
                             else
                             {
-                                //判断最后一条数据时间，如果过长则代表车辆已下线很久，删掉最后几条无用数据 
+                                //判断最后一条数据时间，如果过长则代表车辆已下线很久，删掉最后几条无用数据
                                 try
                                 {
                                     if (result != null && new TimeSpan(DateTime.Now.Ticks - DateTime.Parse(result.Last()["time"]).Ticks).TotalMinutes > 5)
@@ -160,6 +164,7 @@ namespace LocalData.Data
                 }
             }
         }
+
         /// <summary>
         /// 油量拟合计算
         /// </summary>
@@ -188,6 +193,7 @@ namespace LocalData.Data
             }
             return Result < 0 ? 0 : Result;
         }
+
         /// <summary>
         /// 获取车辆分标定信息信息定时
         /// </summary>
@@ -198,6 +204,7 @@ namespace LocalData.Data
             getInfoTimer.AutoReset = true;
             getInfoTimer.Enabled = true;
         }
+
         /// <summary>
         /// 获取标定信息
         /// </summary>
@@ -211,7 +218,7 @@ namespace LocalData.Data
             try
             {
                 string sql = "select ID as id,vehicle_id as vid,VEHICLE_DRIVER as driver, DEMARCATE as type,VEHICLE_BRAND as brand from list_vehicle where company='" + Company + "'";
-                List<Dictionary<string, string>> list = mysql.MultipleSelect(sql, new List<string>() { "vid", "type", "brand", "driver", "id" });
+                List<Dictionary<string, string>> list = mysql.multiple_select_list_dic(sql, new List<string>() { "vid", "type", "brand", "driver", "id" });
                 if (list != null)
                 {
                     foreach (var dic in list)
@@ -227,7 +234,7 @@ namespace LocalData.Data
                     }
                 }
                 sql = "select brand,param1,param2,param3,param4,param5 from fuelparam ";
-                List<Dictionary<string, string>> param = mysql.MultipleSelect(sql, new List<string>() { "brand", "param1", "param2", "param3", "param4", "param5" });
+                List<Dictionary<string, string>> param = mysql.multiple_select_list_dic(sql, new List<string>() { "brand", "param1", "param2", "param3", "param4", "param5" });
                 if (param != null)
                 {
                     foreach (var dic in param)
