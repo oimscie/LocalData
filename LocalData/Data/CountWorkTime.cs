@@ -57,7 +57,7 @@ namespace LocalData.Data
             {
                 try
                 {
-                    sql = "select FIRSTCLOCK as start,LASTTIME as end from rec_clockin_temp where company='" + company + "' and USERNAME='" + item + "' and add_time='" + date + "'";
+                    sql = "select FIRSTCLOCK as start,LASTCLOCK as end from rec_clockin_temp where company='" + company + "' and USERNAME='" + item + "' and add_time='" + date + "'";
                     Dictionary<string, string> dic = mysql.SingleSelect(sql, new string[] { "start", "end" });
                     double result = DiffHours(Convert.ToDateTime(dic.First().Value), Convert.ToDateTime(dic.Last().Value));
                     sql = "select COUNT(ID) as Count from count_driver_day where DRIVER='" + item + "' and COMPANY='" + company + "' and ADD_TIME='" + date + "'";
